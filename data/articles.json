@@ -1,0 +1,802 @@
+[
+  {
+    "title": "Albert Einstein",
+    "domain": "Physics"
+  },
+  {
+    "title": "Isaac Newton",
+    "domain": "Physics"
+  },
+  {
+    "title": "Quantum mechanics",
+    "domain": "Physics"
+  },
+  {
+    "title": "General relativity",
+    "domain": "Physics"
+  },
+  {
+    "title": "Special relativity",
+    "domain": "Physics"
+  },
+  {
+    "title": "Standard Model",
+    "domain": "Physics"
+  },
+  {
+    "title": "Particle physics",
+    "domain": "Physics"
+  },
+  {
+    "title": "Condensed matter physics",
+    "domain": "Physics"
+  },
+  {
+    "title": "Statistical mechanics",
+    "domain": "Physics"
+  },
+  {
+    "title": "Thermodynamics",
+    "domain": "Physics"
+  },
+  {
+    "title": "Electromagnetism",
+    "domain": "Physics"
+  },
+  {
+    "title": "Classical mechanics",
+    "domain": "Physics"
+  },
+  {
+    "title": "Quantum field theory",
+    "domain": "Physics"
+  },
+  {
+    "title": "String theory",
+    "domain": "Physics"
+  },
+  {
+    "title": "Dark matter",
+    "domain": "Physics"
+  },
+  {
+    "title": "Dark energy",
+    "domain": "Physics"
+  },
+  {
+    "title": "Higgs boson",
+    "domain": "Physics"
+  },
+  {
+    "title": "Superconductivity",
+    "domain": "Physics"
+  },
+  {
+    "title": "Nuclear physics",
+    "domain": "Physics"
+  },
+  {
+    "title": "Plasma (physics)",
+    "domain": "Physics"
+  },
+  {
+    "title": "Computer science",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Artificial intelligence",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Machine learning",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Deep learning",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Neural network (machine learning)",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Computer vision",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Natural language processing",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Computer graphics",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Cryptography",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Information theory",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Algorithm",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Data structure",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Database",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Operating system",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Computer network",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Distributed computing",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Quantum computing",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Bioinformatics",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Computational complexity theory",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Software engineering",
+    "domain": "Computer Science"
+  },
+  {
+    "title": "Chemistry",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Organic chemistry",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Inorganic chemistry",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Physical chemistry",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Analytical chemistry",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Biochemistry",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Quantum chemistry",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Electrochemistry",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Photochemistry",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Polymer chemistry",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Chemical bond",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Chemical reaction",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Catalysis",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Periodic table",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Molecular orbital",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Acid–base reaction",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Redox",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Thermochemistry",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Supramolecular chemistry",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Green chemistry",
+    "domain": "Chemistry"
+  },
+  {
+    "title": "Biology",
+    "domain": "Biology"
+  },
+  {
+    "title": "Cell biology",
+    "domain": "Biology"
+  },
+  {
+    "title": "Molecular biology",
+    "domain": "Biology"
+  },
+  {
+    "title": "Genetics",
+    "domain": "Biology"
+  },
+  {
+    "title": "Genomics",
+    "domain": "Biology"
+  },
+  {
+    "title": "Evolution",
+    "domain": "Biology"
+  },
+  {
+    "title": "Natural selection",
+    "domain": "Biology"
+  },
+  {
+    "title": "Ecology",
+    "domain": "Biology"
+  },
+  {
+    "title": "Microbiology",
+    "domain": "Biology"
+  },
+  {
+    "title": "Immunology",
+    "domain": "Biology"
+  },
+  {
+    "title": "Neuroscience",
+    "domain": "Biology"
+  },
+  {
+    "title": "Developmental biology",
+    "domain": "Biology"
+  },
+  {
+    "title": "Systems biology",
+    "domain": "Biology"
+  },
+  {
+    "title": "Structural biology",
+    "domain": "Biology"
+  },
+  {
+    "title": "Synthetic biology",
+    "domain": "Biology"
+  },
+  {
+    "title": "Epigenetics",
+    "domain": "Biology"
+  },
+  {
+    "title": "Proteomics",
+    "domain": "Biology"
+  },
+  {
+    "title": "RNA",
+    "domain": "Biology"
+  },
+  {
+    "title": "DNA",
+    "domain": "Biology"
+  },
+  {
+    "title": "CRISPR",
+    "domain": "Biology"
+  },
+  {
+    "title": "Mathematics",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Calculus",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Linear algebra",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Abstract algebra",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Number theory",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Graph theory",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Set theory",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Topology",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Differential equation",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Probability theory",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Statistics",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Mathematical analysis",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Numerical analysis",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Optimization (mathematics)",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Category theory",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Mathematical logic",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Chaos theory",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Fractal",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Fourier analysis",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Functional analysis",
+    "domain": "Mathematics"
+  },
+  {
+    "title": "Astronomy",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Astrophysics",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Cosmology",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Solar System",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Milky Way",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Galaxy",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Black hole",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Neutron star",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "White dwarf",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Supernova",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Exoplanet",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Planet",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Star",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Sun",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Moon",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Asteroid",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Comet",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Gravitational wave",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Cosmic microwave background",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Event horizon",
+    "domain": "Astronomy"
+  },
+  {
+    "title": "Earth science",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Geology",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Geophysics",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Plate tectonics",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Earthquake",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Seismology",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Volcano",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Volcanology",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Mineralogy",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Petrology",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Geomorphology",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Hydrology",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Oceanography",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Atmospheric science",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Meteorology",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Climatology",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Paleontology",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Glaciology",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Soil science",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Remote sensing",
+    "domain": "Earth Science"
+  },
+  {
+    "title": "Engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Electrical engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Electronic engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Mechanical engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Civil engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Chemical engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Aerospace engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Biomedical engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Materials engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Environmental engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Industrial engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Control engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Robotics",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Mechatronics",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Signal processing",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Control theory",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Power engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Telecommunications engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Structural engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Thermal engineering",
+    "domain": "Engineering"
+  },
+  {
+    "title": "Materials science",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Semiconductor",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Silicon",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Graphene",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Carbon nanotube",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Nanomaterials",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Nanotechnology",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Metallurgy",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Alloy",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Ceramic",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Glass",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Composite material",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Polymer",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Superalloy",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Shape-memory alloy",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Amorphous metal",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Thin film",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Crystal structure",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Crystallography",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Biomaterial",
+    "domain": "Materials Science"
+  },
+  {
+    "title": "Nanoscience",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Computational science",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Data science",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Scientific computing",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Complex systems",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Systems science",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Network science",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Information science",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Cognitive science",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Neuroinformatics",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Computational biology",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Computational chemistry",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Computational physics",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Biophysics",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Astrobiology",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Bioengineering",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Biomedical science",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Environmental science",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Materials chemistry",
+    "domain": "Interdisciplinary Science"
+  },
+  {
+    "title": "Chemical physics",
+    "domain": "Interdisciplinary Science"
+  }
+]

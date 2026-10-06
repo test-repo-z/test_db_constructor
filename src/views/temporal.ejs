@@ -1,0 +1,25 @@
+<%- include('partials/head') %>
+<p class="small"><a href="/articles/<%= article.article_id %>">← <%= article.canonical_title %></a></p>
+<h1>Temporal lab — <%= article.canonical_title %></h1>
+<p class="secondary">Each block below is a live query against MariaDB, shown with its exact SQL and parameters.
+  <span class="tag app">valid time</span> answers “when was this true on Wikipedia?”; <span class="tag sys">system time</span> answers “when did this database store it?”.</p>
+<form class="inline card" method="get">
+  <label>Application-time instant T (UTC)<input type="datetime-local" name="t" step="1" min="<%= inputValue(coverage.startIso) %>" max="<%= inputValue(coverage.endIso) %>" value="<%= inputValue(t.iso) %>"></label>
+  <button type="submit">Run</button>
+</form>
+<% if (!checkpoints.length) { %><div class="notice">No sync checkpoints yet — system-time demonstrations need at least one completed ingestion step.</div><% } %>
+<% for (const d of demos) { %>
+  <section class="card">
+    <h2 class="first"><%= d.title %></h2>
+    <p class="small secondary"><%= d.explain %></p>
+    <pre class="sql"><%= d.sql %></pre>
+    <p class="small mono">params: <%= d.params.map(fmtParam).join(', ') %></p>
+    <% if (!d.rows.length) { %><p class="muted small">(no rows)</p><% } else { const cols = Object.keys(d.rows[0]); %>
+    <div class="table-wrap"><table>
+      <thead><tr><% for (const c of cols) { %><th><%= c %></th><% } %></tr></thead>
+      <tbody><% for (const r of d.rows) { %><tr><% for (const c of cols) { %><td class="mono small"><%= r[c] === systemMax ? '2106-02-07 06:28:15.999999 (current)' : (r[c] === '9999-12-31 23:59:59' ? '9999-12-31 23:59:59 (∞)' : r[c]) %></td><% } %></tr><% } %></tbody>
+    </table></div>
+    <% } %>
+  </section>
+<% } %>
+<%- include('partials/foot') %>

@@ -1,0 +1,45 @@
+{
+  "$comment": "Single source of truth for dataset coverage and ingestion behaviour. Change the window here (and re-run `npm run ingest`) to extend the dataset; nothing else in the code base hard-codes these dates.",
+  "dataset": {
+    "window": {
+      "start": "2021-09-22T00:00:00Z",
+      "end": "2026-09-22T23:59:59Z"
+    },
+    "includeBaselineRevision": true,
+    "ingestStatuses": ["resolved", "redirect"]
+  },
+  "sources": {
+    "articles": "data/articles.json",
+    "resolved": "data/articles.resolved.json",
+    "expectedArticleCount": 200
+  },
+  "wikipedia": {
+    "apiUrl": "https://en.wikipedia.org/w/api.php",
+    "articleBaseUrl": "https://en.wikipedia.org/wiki/",
+    "permalinkBaseUrl": "https://en.wikipedia.org/w/index.php?oldid=",
+    "userAgentProduct": "WikipediaTimeMachine/1.0",
+    "userAgentContact": "https://github.com/zakariaderaoui-polimi/databases_project_cu_2026",
+    "minRequestIntervalMs": 300,
+    "maxRetries": 6,
+    "retryBaseDelayMs": 1000,
+    "retryMaxDelayMs": 30000,
+    "requestTimeoutMs": 60000,
+    "maxlagSeconds": 5,
+    "titlesPerQuery": 50,
+    "metadataPageSize": 500,
+    "contentBatchSize": 20
+  },
+  "ingestion": {
+    "syncStepMonths": 12
+  },
+  "temporal": {
+    "logicalInfinity": "9999-12-31 23:59:59"
+  },
+  "demo": {
+    "$comment": "Articles ingested by `npm run demo`: one moderately edited article per domain (~1,100 revisions, ~35 MB of wikitext to download), so the demo finishes in minutes. Must be titles from data/articles.json.",
+    "articles": ["Nuclear physics", "Database", "Quantum chemistry", "Immunology", "Probability theory", "Event horizon", "Volcanology", "Structural engineering", "Crystallography", "Systems science"]
+  },
+  "diff": {
+    "maxInputBytes": 2000000
+  }
+}

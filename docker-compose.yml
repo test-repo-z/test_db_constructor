@@ -1,0 +1,65 @@
+# Wikipedia Time Machine — MariaDB 13.0.2 + Node.js application.
+#   cp .env.example .env      # then edit the passwords
+#   docker compose up -d db   # database only (scripts run from the host with npm)
+#   docker compose up -d      # database + web application on http://localhost:3000
+name: wiki-time-machine
+
+services:
+  db:
+    image: mariadb:13.0.2
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env}
+      MARIADB_DATABASE: ${DB_NAME:-wiki_time_machine}
+      MARIADB_USER: ${DB_USER:-wtm_app}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      # consumed by db/init/00-create-databases.sh
+      DB_TEST_NAME: ${DB_TEST_NAME:-wiki_time_machine_test}
+      DB_WEB_USER: ${DB_WEB_USER:-wtm_web}
+      DB_WEB_PASSWORD: ${DB_WEB_PASSWORD:-}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_uca1400_ai_ci
+    volumes:
+      - mariadb-data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - ./db/conf/time-machine.cnf:/etc/mysql/conf.d/time-machine.cnf:ro
+    ports:
+      - "127.0.0.1:${DB_PORT:-3306}:3306"
+    healthcheck:
+      # healthcheck.sh ships with the official image; --innodb_initialized waits for InnoDB.
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-wiki_time_machine}
+      DB_USER: ${DB_USER:-wtm_app}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_WEB_USER: ${DB_WEB_USER:-}
+      DB_WEB_PASSWORD: ${DB_WEB_PASSWORD:-}
+      PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-120}
+    # Waits for the database, applies pending migrations (non-destructive), then serves.
+    command: ["sh", "-c", "node scripts/wait-for-db.js && node scripts/migrate.js && node src/server.js"]
+    ports:
+      - "127.0.0.1:${PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mariadb-data:

@@ -3,17 +3,7 @@
 .AppleDouble
 .LSOverride
 
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-env/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# Environment variables
+# Environment variables (secrets)
 .env
 .env.*
 !.env.example
@@ -36,30 +26,23 @@ temp/
 *.tmp
 *.temp
 
-# Local database files
-*.db
-*.sqlite
-*.sqlite3
+# Local database dumps
 *.sql.gz
 *.dump
 
-# Project data
-data/raw/*
-data/processed/*
-!data/raw/.gitkeep
-!data/processed/.gitkeep
+# Raw API caches produced by ingestion (re-creatable)
+data/cache/
 
-# Node / frontend
+# Node
 node_modules/
-dist/
-build/
-
-# AI-generated working files
-*_AI.*
-*-AI.*
-*_ai.*
-*-ai.*
+coverage/
 
 # Windows
 Thumbs.db
 Desktop.ini
+
+# AI-generated working files (team convention)
+*_AI.*
+*-AI.*
+*_ai.*
+*-ai.*

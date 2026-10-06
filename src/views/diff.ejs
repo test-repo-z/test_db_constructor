@@ -1,0 +1,49 @@
+<%- include('partials/head') %>
+<p class="small"><a href="/articles/<%= article.article_id %>">← <%= article.canonical_title %></a></p>
+<h1>Compare — <%= article.canonical_title %></h1>
+
+<form class="inline card" method="get">
+  <label>Earlier (UTC)<input type="datetime-local" name="a" step="1" required min="<%= inputValue(coverage.startIso) %>" max="<%= inputValue(coverage.endIso) %>" value="<%= inputValue(a.iso) %>"></label>
+  <label>Later (UTC)<input type="datetime-local" name="b" step="1" required min="<%= inputValue(coverage.startIso) %>" max="<%= inputValue(coverage.endIso) %>" value="<%= inputValue(b.iso) %>"></label>
+  <label>Mode<select name="mode">
+    <option value="wikitext" <%= mode === 'wikitext' ? 'selected' : '' %>>Wikitext lines</option>
+    <option value="text" <%= mode === 'text' ? 'selected' : '' %>>Readable text</option></select></label>
+  <button type="submit">Compare</button>
+</form>
+
+<% if (swapped) { %><div class="notice">The two instants were given in reverse order; they are shown chronologically (earlier on the left/red, later on the right/green).</div><% } %>
+
+<div class="grid-2">
+  <div class="card">
+    <h2 class="first">Earlier — <span class="mono"><%= a.iso %></span></h2>
+    <%- include('partials/revmeta', { rev: earlier }) %>
+    <p class="small"><a href="/articles/<%= article.article_id %>/as-of?t=<%= a.iso %>">Open this version</a></p>
+  </div>
+  <div class="card">
+    <h2 class="first">Later — <span class="mono"><%= b.iso %></span></h2>
+    <%- include('partials/revmeta', { rev: later }) %>
+    <p class="small"><a href="/articles/<%= article.article_id %>/as-of?t=<%= b.iso %>">Open this version</a></p>
+  </div>
+</div>
+
+<% if (sameRevision) { %>
+  <div class="notice ok"><strong>No difference.</strong> Both instants fall inside the validity interval of the same revision (<span class="mono"><%= earlier.rev_id %></span>): nobody edited the article between them.</div>
+<% } else { %>
+  <p><strong><%= fmtNum(editsBetween) %></strong> edit<%= editsBetween === 1 ? ' was' : 's were' %> saved between the two instants.
+    Lines: <span class="ok-text">+<%= fmtNum(diff.stats.added) %></span> / −<%= fmtNum(diff.stats.removed) %>
+    · size <%= fmtBytes(bytes.earlier) %> → <%= fmtBytes(bytes.later) %>
+    · <a href="https://en.wikipedia.org/w/index.php?<%= q({ diff: later.rev_id, oldid: earlier.rev_id }) %>" rel="noopener noreferrer" target="_blank">same diff on Wikipedia ↗</a></p>
+  <div class="diff">
+    <% for (const h of diff.hunks) { %>
+      <div class="hunk-head">@@ line <%= h.oldStart ?? '—' %> → <%= h.newStart ?? '—' %></div>
+      <% for (const l of h.lines) { %>
+        <div class="line <%= l.type %>">
+          <span class="no"><%= l.oldNo ?? '' %></span><span class="no"><%= l.newNo ?? '' %></span>
+          <span class="sign"><%= l.type === 'add' ? '+' : l.type === 'del' ? '−' : '' %></span>
+          <span class="text"><% if (l.parts) { for (const p of l.parts) { if (p.changed) { if (l.type === 'add') { %><ins><%= p.text %></ins><% } else { %><del><%= p.text %></del><% } } else { %><%= p.text %><% } } } else { %><%= l.text %><% } %></span>
+        </div>
+      <% } %>
+    <% } %>
+  </div>
+<% } %>
+<%- include('partials/foot') %>

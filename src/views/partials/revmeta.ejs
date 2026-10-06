@@ -1,0 +1,9 @@
+<dl class="meta">
+  <dt>Revision</dt><dd><a href="<%= rev.permalink %>" rel="noopener noreferrer" target="_blank" class="mono"><%= rev.rev_id %></a><% if (rev.is_baseline) { %> <span class="tag" title="Saved before the window start; it was the live version when the window opened">baseline</span><% } %><% if (rev.is_minor) { %> <span class="tag">minor</span><% } %></dd>
+  <dt>Saved on Wikipedia</dt><dd class="mono"><%= fmtTime(rev.rev_timestamp) %></dd>
+  <dt><span class="tag app">valid time</span></dt><dd class="mono">[<%= rev.valid_from %>, <%= rev.open_ended ? '∞' : rev.valid_to %>)</dd>
+  <dt>Editor</dt><dd><%= rev.editor_hidden ? '(hidden by Wikipedia)' : (rev.editor ?? '—') %></dd>
+  <dt>Comment</dt><dd><%= rev.comment_hidden ? '(hidden by Wikipedia)' : (rev.comment || '—') %></dd>
+  <dt>Size</dt><dd><%= fmtBytes(rev.size_bytes) %></dd>
+  <% if (rev.parent_rev_id) { %><dt>Parent</dt><dd class="mono"><%= rev.parent_rev_id %></dd><% } %>
+</dl>

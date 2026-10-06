@@ -1,0 +1,61 @@
+# Continuous integration: the whole test suite against a real MariaDB 13.0.2, started exactly as a
+# reader would start it (docker compose + db/init), with throw-away credentials generated per run.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Create .env with throw-away credentials
+        run: node scripts/setup-env.js
+
+      - name: Validate the Compose file
+        run: docker compose config --quiet
+
+      - name: Start MariaDB 13.0.2 and wait until healthy
+        run: docker compose up -d --wait db
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply migrations (project and test databases)
+        run: |
+          npm run migrate
+          npm run migrate -- --database=wiki_time_machine_test
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Integration tests (real MariaDB temporal semantics)
+        run: npm run test:integration
+
+      - name: End-to-end tests (HTTP, read-only web account)
+        run: npm run test:e2e
+
+      - name: Build the application image
+        run: docker compose build app
+
+      - name: Database logs on failure
+        if: failure()
+        run: docker compose logs db
+
+      - name: Stop containers
+        if: always()
+        run: docker compose down -v

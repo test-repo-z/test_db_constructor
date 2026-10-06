@@ -1,0 +1,9 @@
+<%- include('partials/head') %>
+<h1><%= title %></h1>
+<div class="notice error"><%= message %></div>
+<% if (code === 'OUT_OF_COVERAGE') { %>
+<p>The database holds Wikipedia history only for <span class="mono"><%= coverage.startIso %></span> → <span class="mono"><%= coverage.endIso %></span>.
+Answering for another instant would mean inventing data. The window is configured in <code>config/project.json</code> and can be extended by re-running the ingestion.</p>
+<% } %>
+<p><a href="/">All articles</a></p>
+<%- include('partials/foot') %>

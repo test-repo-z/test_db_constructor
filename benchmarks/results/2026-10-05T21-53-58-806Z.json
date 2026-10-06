@@ -1,0 +1,2037 @@
+{
+  "environment": {
+    "timestamp": "2026-10-05T21:53:58.806Z",
+    "mariadb": {
+      "version": "13.0.2-MariaDB-ubu2604",
+      "innodb_buffer_pool_size": 536870912,
+      "innodb_page_size": 16384,
+      "secure_timestamp": "NO",
+      "machine": "aarch64"
+    },
+    "client": {
+      "node": "v23.11.0",
+      "platform": "darwin 25.3.0",
+      "arch": "arm64",
+      "cpus": 8,
+      "cpu_model": "Apple M1",
+      "total_mem_bytes": 8589934592
+    },
+    "connection": {
+      "host": "127.0.0.1",
+      "port": 3306,
+      "note": "client and server on the same machine; MariaDB in Docker Desktop (Linux VM)"
+    },
+    "dataset": {
+      "usable_articles": 196,
+      "ingested_articles": 196,
+      "revisions": 64754,
+      "timeline_rows": 64753,
+      "timeline_row_versions": 65536,
+      "mirror_row_versions": 64753,
+      "window": [
+        "2021-09-22T00:00:00.000Z",
+        "2026-09-22T23:59:59.000Z"
+      ]
+    },
+    "cache": "warm: every workload runs one un-timed warm-up pass first; the whole dataset fits in the InnoDB buffer pool. Cold-cache behaviour is NOT measured."
+  },
+  "options": {},
+  "suites": {
+    "lookup": {
+      "queries": 2000,
+      "reps": 3,
+      "seed": 42,
+      "articles": 196,
+      "results": [
+        {
+          "key": "app_interval_pk_limit1",
+          "label": "Application time, interval predicate + ORDER BY valid_from DESC LIMIT 1 (production query)",
+          "sql": "SELECT h.rev_id FROM article_history h WHERE h.article_id = ? AND h.valid_from <= ? AND h.valid_to > ? ORDER BY h.valid_from DESC LIMIT 1",
+          "latency": {
+            "n": 6000,
+            "min": 0.369,
+            "median": 0.517,
+            "p95": 1.34,
+            "p99": 3.618,
+            "max": 26.31,
+            "mean": 0.689
+          },
+          "executions": 6000,
+          "handlerReadsPerQuery": 1.19,
+          "handlerBreakdownPerQuery": {
+            "Handler_read_key": 1,
+            "Handler_read_next": 0.1,
+            "Handler_read_rnd": 0.1
+          },
+          "disagreementsWithProduction": 0,
+          "plan": {
+            "explain": [
+              {
+                "table": "h",
+                "partitions": null,
+                "type": "range",
+                "key": "PRIMARY",
+                "rows": "72",
+                "Extra": "Using where"
+              }
+            ],
+            "analyze": {
+              "query_time_ms": 0.017376559,
+              "tables": [
+                {
+                  "table": "h",
+                  "partitions": null,
+                  "access_type": "range",
+                  "key": "PRIMARY",
+                  "r_loops": 1,
+                  "rows_estimate": 72,
+                  "r_rows": 1,
+                  "r_total_time_ms": 0.007727556,
+                  "filtered": 72.22222137,
+                  "r_filtered": 100
+                }
+              ]
+            }
+          },
+          "sampleParams": [
+            89,
+            "2024-09-24 05:11:49",
+            "2024-09-24 05:11:49"
+          ]
+        },
+        {
+          "key": "app_interval_no_limit",
+          "label": "Application time, interval predicate only (optimizer free to choose)",
+          "sql": "SELECT h.rev_id FROM article_history h WHERE h.article_id = ? AND h.valid_from <= ? AND h.valid_to > ?",
+          "latency": {
+            "n": 6000,
+            "min": 0.374,
+            "median": 0.511,
+            "p95": 0.887,
+            "p99": 2.036,
+            "max": 22.017,
+            "mean": 0.595
+          },
+          "executions": 6000,
+          "handlerReadsPerQuery": 132.1,
+          "handlerBreakdownPerQuery": {
+            "Handler_read_key": 1,
+            "Handler_read_next": 131.1
+          },
+          "disagreementsWithProduction": 0,
+          "plan": {
+            "explain": [
+              {
+                "table": "h",
+                "partitions": null,
+                "type": "range",
+                "key": "PRIMARY",
+                "rows": "72",
+                "Extra": "Using where"
+              }
+            ],
+            "analyze": {
+              "query_time_ms": 0.044652744,
+              "tables": [
+                {
+                  "table": "h",
+                  "partitions": null,
+                  "access_type": "range",
+                  "key": "PRIMARY",
+                  "r_loops": 1,
+                  "rows_estimate": 72,
+                  "r_rows": 72,
+                  "r_total_time_ms": 0.021595387,
+                  "filtered": 72.22222137,
+                  "r_filtered": 1.388888889
+                }
+              ]
+            }
+          },
+          "sampleParams": [
+            89,
+            "2024-09-24 05:11:49",
+            "2024-09-24 05:11:49"
+          ]
+        },
+        {
+          "key": "app_interval_overlap_index",
+          "label": "Application time, forced through the WITHOUT OVERLAPS index (article_id, row_end, valid_to, valid_from)",
+          "sql": "SELECT h.rev_id FROM article_history h FORCE INDEX (uq_article_history_no_overlap) WHERE h.article_id = ? AND h.valid_from <= ? AND h.valid_to > ?",
+          "latency": {
+            "n": 6000,
+            "min": 0.353,
+            "median": 0.481,
+            "p95": 0.635,
+            "p99": 1.151,
+            "max": 18.397,
+            "mean": 0.528
+          },
+          "executions": 6000,
+          "handlerReadsPerQuery": 2,
+          "handlerBreakdownPerQuery": {
+            "Handler_read_key": 1,
+            "Handler_read_next": 1
+          },
+          "disagreementsWithProduction": 0,
+          "plan": {
+            "explain": [
+              {
+                "table": "h",
+                "partitions": null,
+                "type": "range",
+                "key": "uq_article_history_no_overlap",
+                "rows": "52",
+                "Extra": "Using index condition"
+              }
+            ],
+            "analyze": {
+              "query_time_ms": 0.035212594,
+              "tables": [
+                {
+                  "table": "h",
+                  "partitions": null,
+                  "access_type": "range",
+                  "key": "uq_article_history_no_overlap",
+                  "r_loops": 1,
+                  "rows_estimate": 52,
+                  "r_rows": 1,
+                  "r_total_time_ms": 0.026858479,
+                  "filtered": 100,
+                  "r_filtered": 100
+                }
+              ]
+            }
+          },
+          "sampleParams": [
+            89,
+            "2024-09-24 05:11:49",
+            "2024-09-24 05:11:49"
+          ]
+        },
+        {
+          "key": "events_latest_before",
+          "label": "No intervals: latest revision event with timestamp <= T (MediaWiki-style)",
+          "sql": "SELECT r.rev_id FROM revisions r WHERE r.article_id = ? AND r.rev_timestamp <= ? ORDER BY r.rev_timestamp DESC, r.rev_id DESC LIMIT 1",
+          "latency": {
+            "n": 6000,
+            "min": 0.336,
+            "median": 0.463,
+            "p95": 0.699,
+            "p99": 1.446,
+            "max": 20.326,
+            "mean": 0.526
+          },
+          "executions": 6000,
+          "handlerReadsPerQuery": 1,
+          "handlerBreakdownPerQuery": {
+            "Handler_read_key": 1
+          },
+          "disagreementsWithProduction": 0,
+          "plan": {
+            "explain": [
+              {
+                "table": "r",
+                "partitions": null,
+                "type": "range",
+                "key": "ix_revisions_article_time",
+                "rows": "69",
+                "Extra": "Using where; Using index"
+              }
+            ],
+            "analyze": {
+              "query_time_ms": 0.012740025,
+              "tables": [
+                {
+                  "table": "r",
+                  "partitions": null,
+                  "access_type": "range",
+                  "key": "ix_revisions_article_time",
+                  "r_loops": 1,
+                  "rows_estimate": 69,
+                  "r_rows": 1,
+                  "r_total_time_ms": 0.005346634,
+                  "filtered": 100,
+                  "r_filtered": 100
+                }
+              ]
+            }
+          },
+          "sampleParams": [
+            89,
+            "2024-09-24 05:11:49"
+          ]
+        },
+        {
+          "key": "mirror_system_asof_partitioned",
+          "label": "System time: page_mirror FOR SYSTEM_TIME AS OF T (partitioned by SYSTEM_TIME, 1 year)",
+          "sql": "SELECT m.rev_id FROM page_mirror FOR SYSTEM_TIME AS OF TIMESTAMP ? AS m WHERE m.article_id = ?",
+          "latency": {
+            "n": 6000,
+            "min": 0.36,
+            "median": 0.529,
+            "p95": 0.874,
+            "p99": 1.908,
+            "max": 29.435,
+            "mean": 0.612
+          },
+          "executions": 6000,
+          "handlerReadsPerQuery": 153.22,
+          "handlerBreakdownPerQuery": {
+            "Handler_read_key": 4.26,
+            "Handler_read_next": 148.95
+          },
+          "disagreementsWithProduction": 0,
+          "plan": {
+            "explain": [
+              {
+                "table": "m",
+                "partitions": "p3,p4,p5,pn",
+                "type": "range",
+                "key": "PRIMARY",
+                "rows": "52",
+                "Extra": "Using where"
+              }
+            ],
+            "analyze": {
+              "query_time_ms": 0.039765587,
+              "tables": [
+                {
+                  "table": "m",
+                  "partitions": [
+                    "p3",
+                    "p4",
+                    "p5",
+                    "pn"
+                  ],
+                  "access_type": "range",
+                  "key": "PRIMARY",
+                  "r_loops": 1,
+                  "rows_estimate": 52,
+                  "r_rows": 52,
+                  "r_total_time_ms": null,
+                  "filtered": 100,
+                  "r_filtered": 1.923076923
+                }
+              ]
+            }
+          },
+          "sampleParams": [
+            "2024-09-24 05:11:49",
+            89
+          ]
+        },
+        {
+          "key": "mirror_system_asof_unpartitioned",
+          "label": "System time: identical history in an unpartitioned table (bench_mirror_flat)",
+          "sql": "SELECT m.rev_id FROM bench_mirror_flat FOR SYSTEM_TIME AS OF TIMESTAMP ? AS m WHERE m.article_id = ?",
+          "latency": {
+            "n": 6000,
+            "min": 0.367,
+            "median": 0.528,
+            "p95": 1.319,
+            "p99": 3.159,
+            "max": 28.285,
+            "mean": 0.69
+          },
+          "executions": 6000,
+          "handlerReadsPerQuery": 149.95,
+          "handlerBreakdownPerQuery": {
+            "Handler_read_key": 1,
+            "Handler_read_next": 148.95
+          },
+          "disagreementsWithProduction": 0,
+          "plan": {
+            "explain": [
+              {
+                "table": "m",
+                "partitions": null,
+                "type": "range",
+                "key": "PRIMARY",
+                "rows": "52",
+                "Extra": "Using where"
+              }
+            ],
+            "analyze": {
+              "query_time_ms": 0.029531796,
+              "tables": [
+                {
+                  "table": "m",
+                  "partitions": null,
+                  "access_type": "range",
+                  "key": "PRIMARY",
+                  "r_loops": 1,
+                  "rows_estimate": 52,
+                  "r_rows": 52,
+                  "r_total_time_ms": 0.015538654,
+                  "filtered": 100,
+                  "r_filtered": 1.923076923
+                }
+              ]
+            }
+          },
+          "sampleParams": [
+            "2024-09-24 05:11:49",
+            89
+          ]
+        },
+        {
+          "key": "bitemporal_known_at_checkpoint1",
+          "label": "Bitemporal: application-time predicate on article_history FOR SYSTEM_TIME AS OF <checkpoint #1>",
+          "sql": "SELECT h.rev_id FROM article_history FOR SYSTEM_TIME AS OF TIMESTAMP ? AS h WHERE h.article_id = ? AND h.valid_from <= ? AND h.valid_to > ? ORDER BY h.valid_from DESC LIMIT 1",
+          "latency": {
+            "n": 6000,
+            "min": 0.368,
+            "median": 0.503,
+            "p95": 0.704,
+            "p99": 1.051,
+            "max": 33.418,
+            "mean": 0.55
+          },
+          "executions": 6000,
+          "handlerReadsPerQuery": 108.87,
+          "handlerBreakdownPerQuery": {
+            "Handler_read_key": 1,
+            "Handler_read_prev": 107.87
+          },
+          "differsFromToday": 1569,
+          "plan": {
+            "explain": [
+              {
+                "table": "h",
+                "partitions": null,
+                "type": "range",
+                "key": "PRIMARY",
+                "rows": "72",
+                "Extra": "Using where"
+              }
+            ],
+            "analyze": {
+              "query_time_ms": 0.030492519,
+              "tables": [
+                {
+                  "table": "h",
+                  "partitions": null,
+                  "access_type": "range",
+                  "key": "PRIMARY",
+                  "r_loops": 1,
+                  "rows_estimate": 72,
+                  "r_rows": 49,
+                  "r_total_time_ms": 0.017209477,
+                  "filtered": 100,
+                  "r_filtered": 2.040816327
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "partition": {
+      "scale": 16,
+      "pointQueries": 500,
+      "scanQueries": 15,
+      "reps": 3,
+      "seed": 7,
+      "derived": true,
+      "tables": [
+        {
+          "table": "bench_stress_none",
+          "label": "not partitioned",
+          "ddl": "",
+          "buildSeconds": 2.968,
+          "info": {
+            "versioned": true,
+            "rows_total": 1036048,
+            "rows_current": 3136,
+            "rows_history": 1032912,
+            "approx_rows": 832381,
+            "data_length": 143409152,
+            "index_length": 0,
+            "file_size": 155189248,
+            "allocated_size": 155193344,
+            "partitions": 0
+          }
+        },
+        {
+          "table": "bench_stress_year",
+          "label": "PARTITION BY SYSTEM_TIME INTERVAL 1 YEAR (8 partitions)",
+          "ddl": "PARTITION BY SYSTEM_TIME INTERVAL 1 YEAR STARTS TIMESTAMP '2021-01-01 00:00:00' PARTITIONS 8",
+          "buildSeconds": 3.595,
+          "info": {
+            "versioned": true,
+            "rows_total": 1036048,
+            "rows_current": 3136,
+            "rows_history": 1032912,
+            "approx_rows": 1031586,
+            "data_length": 126664704,
+            "index_length": 0,
+            "file_size": 184614912,
+            "allocated_size": 184639488,
+            "partitions": 8
+          }
+        },
+        {
+          "table": "bench_stress_month",
+          "label": "PARTITION BY SYSTEM_TIME INTERVAL 1 MONTH (64 partitions)",
+          "ddl": "PARTITION BY SYSTEM_TIME INTERVAL 1 MONTH STARTS TIMESTAMP '2021-09-01 00:00:00' PARTITIONS 64",
+          "buildSeconds": 8.364,
+          "info": {
+            "versioned": true,
+            "rows_total": 1036048,
+            "rows_current": 3136,
+            "rows_history": 1032912,
+            "approx_rows": 1019145,
+            "data_length": 157286400,
+            "index_length": 0,
+            "file_size": 643956736,
+            "allocated_size": 644206592,
+            "partitions": 64
+          }
+        }
+      ],
+      "results": [
+        {
+          "key": "current_point",
+          "label": "Current state, one article",
+          "sqlTemplate": "SELECT rev_id FROM <table> WHERE article_id = ?",
+          "perTable": [
+            {
+              "table": "bench_stress_none",
+              "latency": {
+                "n": 1500,
+                "min": 0.323,
+                "median": 0.45,
+                "p95": 0.632,
+                "p99": 1.414,
+                "max": 4.183,
+                "mean": 0.49
+              },
+              "executions": 1500,
+              "handlerReadsPerQuery": 1,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_key": 1
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_none",
+                    "partitions": null,
+                    "type": "const",
+                    "key": "PRIMARY",
+                    "rows": "1",
+                    "Extra": ""
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 0.001086035,
+                  "tables": [
+                    {
+                      "table": "bench_stress_none",
+                      "partitions": null,
+                      "access_type": "const",
+                      "key": "PRIMARY",
+                      "r_loops": 0,
+                      "rows_estimate": 1,
+                      "r_rows": null,
+                      "r_total_time_ms": null,
+                      "filtered": 100,
+                      "r_filtered": null
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_year",
+              "latency": {
+                "n": 1500,
+                "min": 0.324,
+                "median": 0.47,
+                "p95": 0.822,
+                "p99": 2.293,
+                "max": 29.531,
+                "mean": 0.571
+              },
+              "executions": 1500,
+              "handlerReadsPerQuery": 1,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_key": 1
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_year",
+                    "partitions": "pn",
+                    "type": "const",
+                    "key": "PRIMARY",
+                    "rows": "1",
+                    "Extra": ""
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 0.0009189526,
+                  "tables": [
+                    {
+                      "table": "bench_stress_year",
+                      "partitions": [
+                        "pn"
+                      ],
+                      "access_type": "const",
+                      "key": "PRIMARY",
+                      "r_loops": 0,
+                      "rows_estimate": 1,
+                      "r_rows": null,
+                      "r_total_time_ms": null,
+                      "filtered": 100,
+                      "r_filtered": null
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_month",
+              "latency": {
+                "n": 1500,
+                "min": 0.352,
+                "median": 0.451,
+                "p95": 0.589,
+                "p99": 1.362,
+                "max": 8.407,
+                "mean": 0.503
+              },
+              "executions": 1500,
+              "handlerReadsPerQuery": 1,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_key": 1
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_month",
+                    "partitions": "pn",
+                    "type": "const",
+                    "key": "PRIMARY",
+                    "rows": "1",
+                    "Extra": ""
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 0.0009189526,
+                  "tables": [
+                    {
+                      "table": "bench_stress_month",
+                      "partitions": [
+                        "pn"
+                      ],
+                      "access_type": "const",
+                      "key": "PRIMARY",
+                      "r_loops": 0,
+                      "rows_estimate": 1,
+                      "r_rows": null,
+                      "r_total_time_ms": null,
+                      "filtered": 100,
+                      "r_filtered": null
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "key": "current_scan",
+          "label": "Current state, all articles (aggregate)",
+          "sqlTemplate": "SELECT COUNT(*), SUM(size_bytes) FROM <table>",
+          "perTable": [
+            {
+              "table": "bench_stress_none",
+              "latency": {
+                "n": 45,
+                "min": 162.822,
+                "median": 184.038,
+                "p95": 246.822,
+                "p99": 324.751,
+                "max": 324.751,
+                "mean": 194.985
+              },
+              "executions": 45,
+              "handlerReadsPerQuery": 1036049,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 1036049
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_none",
+                    "partitions": null,
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "832381",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 192.3227522,
+                  "tables": [
+                    {
+                      "table": "bench_stress_none",
+                      "partitions": null,
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 832381,
+                      "r_rows": 1036048,
+                      "r_total_time_ms": 119.0854433,
+                      "filtered": 100,
+                      "r_filtered": 0.302688679
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_year",
+              "latency": {
+                "n": 45,
+                "min": 1.08,
+                "median": 1.142,
+                "p95": 1.219,
+                "p99": 1.326,
+                "max": 1.326,
+                "mean": 1.147
+              },
+              "executions": 45,
+              "handlerReadsPerQuery": 3137,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 3137
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_year",
+                    "partitions": "pn",
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "3447",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 0.680108493,
+                  "tables": [
+                    {
+                      "table": "bench_stress_year",
+                      "partitions": [
+                        "pn"
+                      ],
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 3447,
+                      "r_rows": 3136,
+                      "r_total_time_ms": 0.355885294,
+                      "filtered": 100,
+                      "r_filtered": 100
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_month",
+              "latency": {
+                "n": 45,
+                "min": 1.051,
+                "median": 1.248,
+                "p95": 1.791,
+                "p99": 3.368,
+                "max": 3.368,
+                "mean": 1.311
+              },
+              "executions": 45,
+              "handlerReadsPerQuery": 3137,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 3137
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_month",
+                    "partitions": "pn",
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "2732",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 0.755170216,
+                  "tables": [
+                    {
+                      "table": "bench_stress_month",
+                      "partitions": [
+                        "pn"
+                      ],
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 2732,
+                      "r_rows": 3136,
+                      "r_total_time_ms": 0.408474448,
+                      "filtered": 100,
+                      "r_filtered": 100
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "key": "asof_point",
+          "label": "AS OF random T, one article",
+          "sqlTemplate": "SELECT rev_id FROM <table> FOR SYSTEM_TIME AS OF TIMESTAMP ? WHERE article_id = ?",
+          "perTable": [
+            {
+              "table": "bench_stress_none",
+              "latency": {
+                "n": 1500,
+                "min": 0.409,
+                "median": 0.571,
+                "p95": 1.733,
+                "p99": 4.129,
+                "max": 23.142,
+                "mean": 0.817
+              },
+              "executions": 1500,
+              "handlerReadsPerQuery": 155.76,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_key": 1,
+                "Handler_read_next": 154.76
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_none",
+                    "partitions": null,
+                    "type": "range",
+                    "key": "PRIMARY",
+                    "rows": "165",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 0.074602246,
+                  "tables": [
+                    {
+                      "table": "bench_stress_none",
+                      "partitions": null,
+                      "access_type": "range",
+                      "key": "PRIMARY",
+                      "r_loops": 1,
+                      "rows_estimate": 165,
+                      "r_rows": 165,
+                      "r_total_time_ms": 0.038136534,
+                      "filtered": 100,
+                      "r_filtered": 0.606060606
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_year",
+              "latency": {
+                "n": 1500,
+                "min": 0.362,
+                "median": 0.555,
+                "p95": 0.865,
+                "p99": 1.27,
+                "max": 4.187,
+                "mean": 0.598
+              },
+              "executions": 1500,
+              "handlerReadsPerQuery": 159.87,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_key": 5.11,
+                "Handler_read_next": 154.76
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_year",
+                    "partitions": "p3,p4,p5,p6,pn",
+                    "type": "range",
+                    "key": "PRIMARY",
+                    "rows": "166",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 0.086214466,
+                  "tables": [
+                    {
+                      "table": "bench_stress_year",
+                      "partitions": [
+                        "p3",
+                        "p4",
+                        "p5",
+                        "p6",
+                        "pn"
+                      ],
+                      "access_type": "range",
+                      "key": "PRIMARY",
+                      "r_loops": 1,
+                      "rows_estimate": 166,
+                      "r_rows": 165,
+                      "r_total_time_ms": null,
+                      "filtered": 100,
+                      "r_filtered": 0.606060606
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_month",
+              "latency": {
+                "n": 1500,
+                "min": 0.416,
+                "median": 0.804,
+                "p95": 2.312,
+                "p99": 4.639,
+                "max": 31.091,
+                "mean": 1.07
+              },
+              "executions": 1500,
+              "handlerReadsPerQuery": 186.73,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_key": 31.97,
+                "Handler_read_next": 154.76
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_month",
+                    "partitions": "p33,p34,p35,p36,p37,p38,p39,p40,p41,p42,p43,p44,p45,p46,p47,p48,p49,p50,p51,p52,p53,p54,p55,p56,p57,p58,p59,p60,p61,p62,pn",
+                    "type": "range",
+                    "key": "PRIMARY",
+                    "rows": "170",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 0.167834168,
+                  "tables": [
+                    {
+                      "table": "bench_stress_month",
+                      "partitions": [
+                        "p33",
+                        "p34",
+                        "p35",
+                        "p36",
+                        "p37",
+                        "p38",
+                        "p39",
+                        "p40",
+                        "p41",
+                        "p42",
+                        "p43",
+                        "p44",
+                        "p45",
+                        "p46",
+                        "p47",
+                        "p48",
+                        "p49",
+                        "p50",
+                        "p51",
+                        "p52",
+                        "p53",
+                        "p54",
+                        "p55",
+                        "p56",
+                        "p57",
+                        "p58",
+                        "p59",
+                        "p60",
+                        "p61",
+                        "p62",
+                        "pn"
+                      ],
+                      "access_type": "range",
+                      "key": "PRIMARY",
+                      "r_loops": 1,
+                      "rows_estimate": 170,
+                      "r_rows": 165,
+                      "r_total_time_ms": null,
+                      "filtered": 100,
+                      "r_filtered": 0.606060606
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "key": "asof_scan_early",
+          "label": "AS OF T in 2021-22, all articles",
+          "sqlTemplate": "SELECT COUNT(*), SUM(size_bytes) FROM <table> FOR SYSTEM_TIME AS OF TIMESTAMP ?",
+          "perTable": [
+            {
+              "table": "bench_stress_none",
+              "latency": {
+                "n": 45,
+                "min": 227.953,
+                "median": 245.375,
+                "p95": 399.396,
+                "p99": 473.043,
+                "max": 473.043,
+                "mean": 267.552
+              },
+              "executions": 45,
+              "handlerReadsPerQuery": 1036049,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 1036049
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_none",
+                    "partitions": null,
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "832381",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 241.7852526,
+                  "tables": [
+                    {
+                      "table": "bench_stress_none",
+                      "partitions": null,
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 832381,
+                      "r_rows": 1036048,
+                      "r_total_time_ms": 122.6110051,
+                      "filtered": 100,
+                      "r_filtered": 0.302688679
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_year",
+              "latency": {
+                "n": 45,
+                "min": 218.856,
+                "median": 239.83,
+                "p95": 352.072,
+                "p99": 364.095,
+                "max": 364.095,
+                "mean": 253.564
+              },
+              "executions": 45,
+              "handlerReadsPerQuery": 993516.67,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 993516.67
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_year",
+                    "partitions": "p0,p1,p2,p3,p4,p5,p6,pn",
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "1031586",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 298.8426878,
+                  "tables": [
+                    {
+                      "table": "bench_stress_year",
+                      "partitions": [
+                        "p0",
+                        "p1",
+                        "p2",
+                        "p3",
+                        "p4",
+                        "p5",
+                        "p6",
+                        "pn"
+                      ],
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 1031586,
+                      "r_rows": 1036048,
+                      "r_total_time_ms": 147.5388067,
+                      "filtered": 100,
+                      "r_filtered": 0.302688679
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_month",
+              "latency": {
+                "n": 45,
+                "min": 192.674,
+                "median": 241.322,
+                "p95": 334.765,
+                "p99": 349.754,
+                "max": 349.754,
+                "mean": 248.652
+              },
+              "executions": 45,
+              "handlerReadsPerQuery": 938490.27,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 938490.27
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_month",
+                    "partitions": "p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,p24,p25,p26,p27,p28,p29,p30,p31,p32,p33,p34,p35,p36,p37,p38,p39,p40,p41,p42,p43,p44,p45,p46,p47,p48,p49,p50,p51,p52,p53,p54,p55,p56,p57,p58,p59,p60,p61,p62,pn",
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "1009590",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 283.9417454,
+                  "tables": [
+                    {
+                      "table": "bench_stress_month",
+                      "partitions": [
+                        "p1",
+                        "p2",
+                        "p3",
+                        "p4",
+                        "p5",
+                        "p6",
+                        "p7",
+                        "p8",
+                        "p9",
+                        "p10",
+                        "p11",
+                        "p12",
+                        "p13",
+                        "p14",
+                        "p15",
+                        "p16",
+                        "p17",
+                        "p18",
+                        "p19",
+                        "p20",
+                        "p21",
+                        "p22",
+                        "p23",
+                        "p24",
+                        "p25",
+                        "p26",
+                        "p27",
+                        "p28",
+                        "p29",
+                        "p30",
+                        "p31",
+                        "p32",
+                        "p33",
+                        "p34",
+                        "p35",
+                        "p36",
+                        "p37",
+                        "p38",
+                        "p39",
+                        "p40",
+                        "p41",
+                        "p42",
+                        "p43",
+                        "p44",
+                        "p45",
+                        "p46",
+                        "p47",
+                        "p48",
+                        "p49",
+                        "p50",
+                        "p51",
+                        "p52",
+                        "p53",
+                        "p54",
+                        "p55",
+                        "p56",
+                        "p57",
+                        "p58",
+                        "p59",
+                        "p60",
+                        "p61",
+                        "p62",
+                        "pn"
+                      ],
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 1009590,
+                      "r_rows": 1027872,
+                      "r_total_time_ms": 142.992748,
+                      "filtered": 100,
+                      "r_filtered": 0.305096354
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "key": "asof_scan_late",
+          "label": "AS OF T in 2025-26, all articles",
+          "sqlTemplate": "SELECT COUNT(*), SUM(size_bytes) FROM <table> FOR SYSTEM_TIME AS OF TIMESTAMP ?",
+          "perTable": [
+            {
+              "table": "bench_stress_none",
+              "latency": {
+                "n": 45,
+                "min": 184.704,
+                "median": 195.046,
+                "p95": 335.821,
+                "p99": 493.926,
+                "max": 493.926,
+                "mean": 220.954
+              },
+              "executions": 45,
+              "handlerReadsPerQuery": 1036049,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 1036049
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_none",
+                    "partitions": null,
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "832381",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 196.9915746,
+                  "tables": [
+                    {
+                      "table": "bench_stress_none",
+                      "partitions": null,
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 832381,
+                      "r_rows": 1036048,
+                      "r_total_time_ms": 122.0170693,
+                      "filtered": 100,
+                      "r_filtered": 0.302688679
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_year",
+              "latency": {
+                "n": 45,
+                "min": 26.482,
+                "median": 37.539,
+                "p95": 1074.763,
+                "p99": 1889.062,
+                "max": 1889.062,
+                "mean": 149.386
+              },
+              "executions": 45,
+              "handlerReadsPerQuery": 197603.33,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 197603.33
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_year",
+                    "partitions": "p5,p6,pn",
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "130949",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 92.16835981,
+                  "tables": [
+                    {
+                      "table": "bench_stress_year",
+                      "partitions": [
+                        "p5",
+                        "p6",
+                        "pn"
+                      ],
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 130949,
+                      "r_rows": 134048,
+                      "r_total_time_ms": 47.68261448,
+                      "filtered": 100,
+                      "r_filtered": 2.339460492
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_month",
+              "latency": {
+                "n": 45,
+                "min": 4.741,
+                "median": 36.412,
+                "p95": 59.309,
+                "p99": 73.063,
+                "max": 73.063,
+                "mean": 31.718
+              },
+              "executions": 45,
+              "handlerReadsPerQuery": 107502.6,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 107502.6
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_month",
+                    "partitions": "p53,p54,p55,p56,p57,p58,p59,p60,p61,p62,pn",
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "115337",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 28.29601369,
+                  "tables": [
+                    {
+                      "table": "bench_stress_month",
+                      "partitions": [
+                        "p53",
+                        "p54",
+                        "p55",
+                        "p56",
+                        "p57",
+                        "p58",
+                        "p59",
+                        "p60",
+                        "p61",
+                        "p62",
+                        "pn"
+                      ],
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 115337,
+                      "r_rows": 116368,
+                      "r_total_time_ms": 14.08934007,
+                      "filtered": 100,
+                      "r_filtered": 2.694898941
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "key": "between_month",
+          "label": "BETWEEN a 1-month span, all versions",
+          "sqlTemplate": "SELECT COUNT(*) FROM <table> FOR SYSTEM_TIME BETWEEN TIMESTAMP ? AND TIMESTAMP ?",
+          "perTable": [
+            {
+              "table": "bench_stress_none",
+              "latency": {
+                "n": 45,
+                "min": 199.311,
+                "median": 250.956,
+                "p95": 372.415,
+                "p99": 427.162,
+                "max": 427.162,
+                "mean": 267.841
+              },
+              "executions": 45,
+              "handlerReadsPerQuery": 1036049,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 1036049
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_none",
+                    "partitions": null,
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "832381",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 348.9988303,
+                  "tables": [
+                    {
+                      "table": "bench_stress_none",
+                      "partitions": null,
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 832381,
+                      "r_rows": 1036048,
+                      "r_total_time_ms": 205.9950131,
+                      "filtered": 100,
+                      "r_filtered": 1.97056507
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_year",
+              "latency": {
+                "n": 45,
+                "min": 71.688,
+                "median": 131.614,
+                "p95": 275.53,
+                "p99": 571.302,
+                "max": 571.302,
+                "mean": 156.978
+              },
+              "executions": 45,
+              "handlerReadsPerQuery": 574304.93,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 574304.93
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_year",
+                    "partitions": "p4,p5,p6,pn",
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "315598",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 84.84681352,
+                  "tables": [
+                    {
+                      "table": "bench_stress_year",
+                      "partitions": [
+                        "p4",
+                        "p5",
+                        "p6",
+                        "pn"
+                      ],
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 315598,
+                      "r_rows": 324704,
+                      "r_total_time_ms": 41.22150025,
+                      "filtered": 100,
+                      "r_filtered": 6.287572682
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_month",
+              "latency": {
+                "n": 45,
+                "min": 54.121,
+                "median": 115.06,
+                "p95": 266.024,
+                "p99": 325.449,
+                "max": 325.449,
+                "mean": 138.354
+              },
+              "executions": 45,
+              "handlerReadsPerQuery": 467981.13,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 467981.13
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_month",
+                    "partitions": "p47,p48,p49,p50,p51,p52,p53,p54,p55,p56,p57,p58,p59,p60,p61,p62,pn",
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "216274",
+                    "Extra": "Using where"
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 59.79992396,
+                  "tables": [
+                    {
+                      "table": "bench_stress_month",
+                      "partitions": [
+                        "p47",
+                        "p48",
+                        "p49",
+                        "p50",
+                        "p51",
+                        "p52",
+                        "p53",
+                        "p54",
+                        "p55",
+                        "p56",
+                        "p57",
+                        "p58",
+                        "p59",
+                        "p60",
+                        "p61",
+                        "p62",
+                        "pn"
+                      ],
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 216274,
+                      "r_rows": 213696,
+                      "r_total_time_ms": 27.39652614,
+                      "filtered": 100,
+                      "r_filtered": 9.55375861
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "key": "all_scan",
+          "label": "ALL row versions (full history)",
+          "sqlTemplate": "SELECT COUNT(*) FROM <table> FOR SYSTEM_TIME ALL",
+          "perTable": [
+            {
+              "table": "bench_stress_none",
+              "latency": {
+                "n": 15,
+                "min": 129.835,
+                "median": 146.853,
+                "p95": 193.827,
+                "p99": 193.827,
+                "max": 193.827,
+                "mean": 150.455
+              },
+              "executions": 15,
+              "handlerReadsPerQuery": 1036049,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 1036049
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_none",
+                    "partitions": null,
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "832381",
+                    "Extra": ""
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 276.7769223,
+                  "tables": [
+                    {
+                      "table": "bench_stress_none",
+                      "partitions": null,
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 832381,
+                      "r_rows": 1036048,
+                      "r_total_time_ms": 214.6132851,
+                      "filtered": 100,
+                      "r_filtered": 100
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_year",
+              "latency": {
+                "n": 15,
+                "min": 137.916,
+                "median": 150.394,
+                "p95": 233.305,
+                "p99": 233.305,
+                "max": 233.305,
+                "mean": 159.826
+              },
+              "executions": 15,
+              "handlerReadsPerQuery": 1036056,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 1036056
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_year",
+                    "partitions": "p0,p1,p2,p3,p4,p5,p6,pn",
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "1031586",
+                    "Extra": ""
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 152.983434,
+                  "tables": [
+                    {
+                      "table": "bench_stress_year",
+                      "partitions": [
+                        "p0",
+                        "p1",
+                        "p2",
+                        "p3",
+                        "p4",
+                        "p5",
+                        "p6",
+                        "pn"
+                      ],
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 1031586,
+                      "r_rows": 1036048,
+                      "r_total_time_ms": 113.6236901,
+                      "filtered": 100,
+                      "r_filtered": 100
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "table": "bench_stress_month",
+              "latency": {
+                "n": 15,
+                "min": 143.522,
+                "median": 179.166,
+                "p95": 304.062,
+                "p99": 304.062,
+                "max": 304.062,
+                "mean": 189.395
+              },
+              "executions": 15,
+              "handlerReadsPerQuery": 1036112,
+              "handlerBreakdownPerQuery": {
+                "Handler_read_rnd_next": 1036112
+              },
+              "sameAnswersAsUnpartitioned": true,
+              "plan": {
+                "explain": [
+                  {
+                    "table": "bench_stress_month",
+                    "partitions": "p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,p24,p25,p26,p27,p28,p29,p30,p31,p32,p33,p34,p35,p36,p37,p38,p39,p40,p41,p42,p43,p44,p45,p46,p47,p48,p49,p50,p51,p52,p53,p54,p55,p56,p57,p58,p59,p60,p61,p62,pn",
+                    "type": "ALL",
+                    "key": null,
+                    "rows": "1019145",
+                    "Extra": ""
+                  }
+                ],
+                "analyze": {
+                  "query_time_ms": 178.4441447,
+                  "tables": [
+                    {
+                      "table": "bench_stress_month",
+                      "partitions": [
+                        "p0",
+                        "p1",
+                        "p2",
+                        "p3",
+                        "p4",
+                        "p5",
+                        "p6",
+                        "p7",
+                        "p8",
+                        "p9",
+                        "p10",
+                        "p11",
+                        "p12",
+                        "p13",
+                        "p14",
+                        "p15",
+                        "p16",
+                        "p17",
+                        "p18",
+                        "p19",
+                        "p20",
+                        "p21",
+                        "p22",
+                        "p23",
+                        "p24",
+                        "p25",
+                        "p26",
+                        "p27",
+                        "p28",
+                        "p29",
+                        "p30",
+                        "p31",
+                        "p32",
+                        "p33",
+                        "p34",
+                        "p35",
+                        "p36",
+                        "p37",
+                        "p38",
+                        "p39",
+                        "p40",
+                        "p41",
+                        "p42",
+                        "p43",
+                        "p44",
+                        "p45",
+                        "p46",
+                        "p47",
+                        "p48",
+                        "p49",
+                        "p50",
+                        "p51",
+                        "p52",
+                        "p53",
+                        "p54",
+                        "p55",
+                        "p56",
+                        "p57",
+                        "p58",
+                        "p59",
+                        "p60",
+                        "p61",
+                        "p62",
+                        "pn"
+                      ],
+                      "access_type": "ALL",
+                      "key": null,
+                      "r_loops": 1,
+                      "rows_estimate": 1019145,
+                      "r_rows": 1036048,
+                      "r_total_time_ms": 131.6123968,
+                      "filtered": 100,
+                      "r_filtered": 100
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "maintenance": [
+        {
+          "table": "bench_stress_none",
+          "label": "row-by-row purge",
+          "sql": "DELETE HISTORY FROM bench_stress_none BEFORE SYSTEM_TIME TIMESTAMP '2023-01-01 00:00:00'",
+          "ms": 1810.9,
+          "rows_removed": 294608
+        },
+        {
+          "table": "bench_stress_year",
+          "label": "drop whole history partitions",
+          "sql": "ALTER TABLE bench_stress_year DROP PARTITION p0, p1",
+          "ms": 90.7,
+          "rows_removed": 294608
+        },
+        {
+          "table": "bench_stress_month",
+          "label": "DELETE HISTORY on a partitioned table",
+          "sql": "DELETE HISTORY FROM bench_stress_month BEFORE SYSTEM_TIME TIMESTAMP '2023-01-01 00:00:00'",
+          "ms": 1218.3,
+          "rows_removed": 294608
+        }
+      ]
+    },
+    "storage": {
+      "tables": [
+        {
+          "table": "articles",
+          "versioned": true,
+          "rows_total": 200,
+          "rows_current": 200,
+          "rows_history": 0,
+          "approx_rows": 200,
+          "data_length": 65536,
+          "index_length": 65536,
+          "file_size": 196608,
+          "allocated_size": 200704,
+          "partitions": 0
+        },
+        {
+          "table": "revisions",
+          "versioned": false,
+          "rows_total": 64754,
+          "rows_current": 64754,
+          "rows_history": null,
+          "approx_rows": 57606,
+          "data_length": 27852800,
+          "index_length": 13189120,
+          "file_size": 50331648,
+          "allocated_size": 50335744,
+          "partitions": 0
+        },
+        {
+          "table": "article_history",
+          "versioned": true,
+          "rows_total": 65536,
+          "rows_current": 64753,
+          "rows_history": 783,
+          "approx_rows": 57528,
+          "data_length": 6832128,
+          "index_length": 7208960,
+          "file_size": 22020096,
+          "allocated_size": 22024192,
+          "partitions": 0
+        },
+        {
+          "table": "page_mirror",
+          "versioned": true,
+          "rows_total": 64753,
+          "rows_current": 196,
+          "rows_history": 64557,
+          "approx_rows": 68340,
+          "data_length": 14827520,
+          "index_length": 0,
+          "file_size": 61964288,
+          "allocated_size": 61988864,
+          "partitions": 7
+        },
+        {
+          "table": "content_chunks",
+          "versioned": false,
+          "rows_total": 1656,
+          "rows_current": 1656,
+          "rows_history": null,
+          "approx_rows": 1927,
+          "data_length": 83378176,
+          "index_length": 49152,
+          "file_size": 92274688,
+          "allocated_size": 92278784,
+          "partitions": 0
+        },
+        {
+          "table": "revision_texts",
+          "versioned": false,
+          "rows_total": 56271,
+          "rows_current": 56271,
+          "rows_history": null,
+          "approx_rows": 59565,
+          "data_length": 6864896,
+          "index_length": 5816320,
+          "file_size": 20971520,
+          "allocated_size": 20975616,
+          "partitions": 0
+        },
+        {
+          "table": "article_sync_state",
+          "versioned": true,
+          "rows_total": 980,
+          "rows_current": 196,
+          "rows_history": 784,
+          "approx_rows": 980,
+          "data_length": 81920,
+          "index_length": 49152,
+          "file_size": 180224,
+          "allocated_size": 184320,
+          "partitions": 0
+        }
+      ],
+      "content": {
+        "chunks": 1656,
+        "texts": 56271,
+        "raw_bytes": 7166636534,
+        "stored_bytes": 68422132
+      },
+      "revisions": {
+        "revisions": 64754,
+        "sum_revision_sizes": 8083487082
+      },
+      "articleHistoryHistoryRows": 783,
+      "mirrorPartitions": [
+        {
+          "name": "p0",
+          "upper_bound": "2022-01-01 00:00:00",
+          "rows": 3988,
+          "inline_text_bytes_if_stored": 445935099
+        },
+        {
+          "name": "p1",
+          "upper_bound": "2023-01-01 00:00:00",
+          "rows": 14425,
+          "inline_text_bytes_if_stored": 1658093914
+        },
+        {
+          "name": "p2",
+          "upper_bound": "2024-01-01 00:00:00",
+          "rows": 13387,
+          "inline_text_bytes_if_stored": 1668717346
+        },
+        {
+          "name": "p3",
+          "upper_bound": "2025-01-01 00:00:00",
+          "rows": 12659,
+          "inline_text_bytes_if_stored": 1612971546
+        },
+        {
+          "name": "p4",
+          "upper_bound": "2026-01-01 00:00:00",
+          "rows": 11916,
+          "inline_text_bytes_if_stored": 1545744514
+        },
+        {
+          "name": "p5",
+          "upper_bound": "2027-01-01 00:00:00",
+          "rows": 8182,
+          "inline_text_bytes_if_stored": 1136020876
+        },
+        {
+          "name": "pn",
+          "upper_bound": "CURRENT",
+          "rows": 196,
+          "inline_text_bytes_if_stored": 15919649
+        }
+      ],
+      "growth": [
+        {
+          "year": 2021,
+          "closed_versions": 3988
+        },
+        {
+          "year": 2022,
+          "closed_versions": 14425
+        },
+        {
+          "year": 2023,
+          "closed_versions": 13387
+        },
+        {
+          "year": 2024,
+          "closed_versions": 12659
+        },
+        {
+          "year": 2025,
+          "closed_versions": 11916
+        },
+        {
+          "year": 2026,
+          "closed_versions": 8182
+        }
+      ],
+      "inlineExperiment": {
+        "articles": [
+          {
+            "article_id": 74,
+            "canonical_title": "Structural biology",
+            "revisions": 72,
+            "bytes": 1548378
+          },
+          {
+            "article_id": 131,
+            "canonical_title": "Geomorphology",
+            "revisions": 95,
+            "bytes": 5139232
+          },
+          {
+            "article_id": 33,
+            "canonical_title": "Database",
+            "revisions": 144,
+            "bytes": 11028115
+          },
+          {
+            "article_id": 91,
+            "canonical_title": "Statistics",
+            "revisions": 369,
+            "bytes": 29264311
+          },
+          {
+            "article_id": 25,
+            "canonical_title": "Neural network (machine learning)",
+            "revisions": 770,
+            "bytes": 112473104
+          }
+        ],
+        "revisionsReplayed": 1450,
+        "rawTextBytes": 158388635,
+        "seconds": 42.086,
+        "tables": [
+          {
+            "table": "bench_inline_plain",
+            "versioned": true,
+            "rows_total": 1450,
+            "rows_current": 5,
+            "rows_history": 1445,
+            "approx_rows": 1441,
+            "data_length": 135380992,
+            "index_length": 0,
+            "file_size": 184549376,
+            "allocated_size": 184553472,
+            "partitions": 0
+          },
+          {
+            "table": "bench_inline_compressed",
+            "versioned": true,
+            "rows_total": 1450,
+            "rows_current": 5,
+            "rows_history": 1445,
+            "approx_rows": 1297,
+            "data_length": 57868288,
+            "index_length": 0,
+            "file_size": 79691776,
+            "allocated_size": 79695872,
+            "partitions": 0
+          }
+        ],
+        "chunkStore": {
+          "stored_bytes": 1348573,
+          "raw_distinct_bytes": 138790233
+        }
+      }
+    }
+  },
+  "durationSeconds": 238.219
+}

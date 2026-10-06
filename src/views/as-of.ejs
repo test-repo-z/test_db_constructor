@@ -1,0 +1,83 @@
+<%- include('partials/head') %>
+<p class="small"><a href="/articles/<%= article.article_id %>">← <%= article.canonical_title %></a></p>
+<h1><%= article.canonical_title %> <span class="secondary normal">as of <span class="mono"><%= t.iso %></span></span></h1>
+
+<form class="inline card" method="get" action="/articles/<%= article.article_id %>/as-of">
+  <label>Instant (UTC)<input type="datetime-local" name="t" step="1" required min="<%= inputValue(coverage.startIso) %>" max="<%= inputValue(coverage.endIso) %>" value="<%= inputValue(t.iso) %>"></label>
+  <label>Database knowledge
+    <select name="checkpoint">
+      <option value="">current (today’s knowledge)</option>
+      <% for (const c of checkpoints) { %><option value="<%= c.checkpoint_id %>" <%= knownAt && knownAt.checkpoint.checkpoint_id === c.checkpoint_id ? 'selected' : '' %>>as stored after sync #<%= c.checkpoint_id %> (knew Wikipedia up to <%= c.synced_through.slice(0,10) %>)</option><% } %>
+    </select>
+  </label>
+  <button type="submit">Go</button>
+  <% if (revision) { %>
+  <a class="button secondary" href="/articles/<%= article.article_id %>/diff?<%= q({ a: t.iso, b: coverage.endIso }) %>">Compare with window end</a>
+  <% } %>
+</form>
+
+<% if (!revision) { %>
+  <div class="notice">
+    <strong>No revision of this article was live at <span class="mono"><%= t.iso %></span>.</strong>
+    <% if (notYetCreated) { %>The first known version starts at <span class="mono"><%= notYetCreated.first_from_iso %></span> — the article did not exist yet on Wikipedia.<% } else { %>No revisions have been ingested for this article yet.<% } %>
+  </div>
+<% } else { %>
+
+<div class="grid-2">
+  <div class="card">
+    <h2 class="first">Reconstructed revision</h2>
+    <%- include('partials/revmeta', { rev: revision }) %>
+    <%
+      const vf = Date.parse(revision.valid_from_iso), vt = revision.open_ended ? coverage.end.getTime() : Date.parse(revision.valid_to_iso);
+      const s = coverage.start.getTime(), e = coverage.end.getTime(), span = e - s;
+      const pct = (x) => Math.max(0, Math.min(100, ((x - s) / span) * 100)).toFixed(2);
+    %>
+    <svg class="timeband" viewBox="0 0 1000 18" preserveAspectRatio="none" role="img" aria-label="Validity of this revision within the dataset window, and the requested instant">
+      <rect class="track" x="0" y="4" width="1000" height="10" rx="5"></rect>
+      <rect class="valid" x="<%= (pct(vf) * 10).toFixed(1) %>" y="4" width="<%= Math.max(3, (pct(vt) - pct(vf)) * 10).toFixed(1) %>" height="10" rx="5"></rect>
+      <rect class="marker" x="<%= (pct(t.date.getTime()) * 10 - 1).toFixed(1) %>" y="0" width="2" height="18"></rect>
+    </svg>
+    <p class="small muted">Shaded: when this revision was live (valid time). Line: the requested instant. The requested instant satisfies <code>valid_from ≤ T &lt; valid_to</code>.</p>
+    <p class="small">
+      <% if (previous) { %><a href="/articles/<%= article.article_id %>/as-of?t=<%= previous.valid_from_iso %>">← previous revision (<%= previous.rev_id %>)</a><% } %>
+      <% if (next) { %> · <a href="/articles/<%= article.article_id %>/as-of?t=<%= next.valid_from_iso %>">next revision (<%= next.rev_id %>) →</a><% } %>
+    </p>
+  </div>
+  <div class="card">
+    <h2 class="first">How it was found</h2>
+    <p class="small"><span class="tag app">valid time</span> lookup on <code>article_history</code> in <%= lookupMs.toFixed(2) %> ms:</p>
+    <details><summary class="small">SQL</summary><pre class="sql"><%= sql %></pre><p class="small mono">params: <%= sqlParams.map(fmtParam).join(', ') %></p></details>
+    <% if (mirror) { %>
+      <p class="small"><span class="tag sys">system time</span> cross-check on the replayed <code>page_mirror</code> (<code>FOR SYSTEM_TIME AS OF</code>):
+        <% if (mirror.agrees) { %><strong class="ok-text">same revision ✓</strong><% } else { %><strong>revision <%= mirror.rev_id %> — differs</strong><% } %></p>
+      <details><summary class="small">SQL</summary><pre class="sql"><%= mirror.sql %></pre></details>
+    <% } %>
+    <% if (knownAt) { %>
+      <div class="notice <%= knownAt.agrees ? 'ok' : '' %>">
+        <strong>Bitemporal view.</strong> At system time <span class="mono"><%= knownAt.checkpoint.completed_at %></span> (after sync #<%= knownAt.checkpoint.checkpoint_id %>, which knew Wikipedia only up to <span class="mono"><%= knownAt.checkpoint.synced_through %></span>), the database answered:
+        <% if (knownAt.revision) { %>revision <span class="mono"><%= knownAt.revision.rev_id %></span>, valid <span class="mono">[<%= knownAt.revision.valid_from %>, <%= knownAt.revision.open_ended ? '∞' : knownAt.revision.valid_to %>)</span>.<% } else { %>nothing (it did not know this article yet).<% } %>
+        <%= knownAt.agrees ? 'Same as today.' : 'Today’s answer differs: later syncs learned about newer edits and closed that interval.' %>
+        <details><summary class="small">SQL</summary><pre class="sql"><%= knownAt.sql %></pre></details>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="tabs" role="tablist">
+  <a class="<%= view === 'rendered' ? 'active' : '' %>" href="?<%= q({ t: t.iso, checkpoint: knownAt ? knownAt.checkpoint.checkpoint_id : undefined }) %>">Rendered (approximate)</a>
+  <a class="<%= view === 'wikitext' ? 'active' : '' %>" href="?<%= q({ t: t.iso, view: 'wikitext', checkpoint: knownAt ? knownAt.checkpoint.checkpoint_id : undefined }) %>">Wikitext (exact)</a>
+  <a href="<%= revision.permalink %>" rel="noopener noreferrer" target="_blank">This revision on Wikipedia ↗</a>
+</div>
+<% if (wikitext == null) { %>
+  <div class="notice">The text of this revision was hidden by Wikipedia (revision deletion), so it is not stored. The revision still occupies its place on the timeline.</div>
+<% } else if (view === 'wikitext') { %>
+  <pre class="wikitext"><%= wikitext %></pre>
+<% } else if (!rendered.ok) { %>
+  <div class="notice error">The offline renderer could not parse this revision (<%= rendered.error %>). The exact wikitext is shown instead.</div>
+  <pre class="wikitext"><%= wikitext %></pre>
+<% } else { %>
+  <p class="small muted">Rendered offline from the stored wikitext. Templates (infoboxes, citations, formulas) are not expanded as MediaWiki would; links point to today’s Wikipedia pages.</p>
+  <article class="article-body"><%- rendered.html %></article>
+<% } %>
+<% } %>
+<%- include('partials/foot') %>

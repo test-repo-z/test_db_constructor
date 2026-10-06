@@ -1,0 +1,50 @@
+<%- include('partials/head') %>
+<h1>Dataset &amp; temporal model</h1>
+
+<div class="card">
+  <h2 class="first">Why two time dimensions?</h2>
+  <p>A revision saved on Wikipedia on <span class="mono">2023-03-15 10:30:00</span> and imported into MariaDB on <span class="mono"><%= summary.run ? String(summary.run.started_at).slice(0, 19) : '2026-10-05 18:00:00' %></span> has two different timestamps, answering two different questions:</p>
+  <ul>
+    <li><span class="tag app">valid time</span> <code>article_history.valid_from = 2023-03-15 10:30:00</code> — <em>when was this text live on Wikipedia?</em> It comes from Wikipedia’s own revision timestamp and is stored explicitly in an SQL:2011 application-time period (<code>PERIOD FOR valid_period</code>).</li>
+    <li><span class="tag sys">system time</span> <code>article_history.row_start ≈ <%= summary.run ? String(summary.run.started_at).slice(0, 19) : 'import time' %></code> — <em>when did this database learn it?</em> MariaDB fills it automatically (<code>WITH SYSTEM VERSIONING</code>) and nobody can set it to 2023 in normal operation.</li>
+  </ul>
+  <p>Using the import time to answer “what did the article say in 2023?” would be wrong: everything would appear to have been written in <%= summary.run ? String(summary.run.started_at).slice(0, 4) : 'the import year' %>. The time machine therefore navigates <em>valid time</em>; system time records how the database’s knowledge evolved (each sync step closes previously open-ended intervals, and the superseded belief is kept as history). Together they make the table <strong>bitemporal</strong>.</p>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <h2 class="first">Coverage</h2>
+    <dl class="meta">
+      <dt>Valid-time window</dt><dd class="mono"><%= summary.coverage.startIso %> → <%= summary.coverage.endIso %></dd>
+      <dt>Last ingestion</dt><dd><%= summary.run ? `#${summary.run.run_id} ${summary.run.status}, finished ${summary.run.finished_at ?? '—'} UTC` : 'none' %></dd>
+      <dt>Mirror replay</dt><dd><%= summary.replay ? `#${summary.replay.replay_id}, ${fmtNum(summary.replay.revisions_applied)} revisions` : 'not run' %></dd>
+    </dl>
+    <h3>Sync checkpoints (system time)</h3>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>Knew Wikipedia up to</th><th>Committed at (system time)</th></tr></thead><tbody>
+      <% for (const c of summary.checkpoints) { %><tr><td><%= c.checkpoint_id %></td><td class="mono small"><%= c.synced_through %></td><td class="mono small"><%= c.completed_at %></td></tr><% } %>
+    </tbody></table></div>
+  </div>
+  <div class="card">
+    <h2 class="first">History growth of <code>page_mirror</code></h2>
+    <p class="small secondary">Row versions closed per year (one partition per year, <code>PARTITION BY SYSTEM_TIME INTERVAL 1 YEAR</code>). “Inline text” is what the history would weigh if every row version carried the full article text, as a naive system-versioned design would.</p>
+    <div class="table-wrap"><table><thead><tr><th>Year closed</th><th class="num">Row versions</th><th class="num">Inline text</th></tr></thead><tbody>
+      <% for (const g of summary.growth) { %><tr><td><%= g.year_closed %></td><td class="num"><%= fmtNum(g.row_versions) %></td><td class="num"><%= fmtBytes(g.inline_text_bytes) %></td></tr><% } %>
+    </tbody></table></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2 class="first">The curated list (<%= curated.length %> titles) and how each was resolved</h2>
+  <p class="small secondary"><code>data/articles.json</code> is the editorial source of truth and is never modified. Resolution against the MediaWiki API produces <code>data/articles.resolved.json</code>; entries that are not usable are listed here, not dropped.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Requested title</th><th>Domain</th><th>Status</th><th>Canonical page / note</th></tr></thead>
+    <tbody>
+    <% for (const c of curated) { %>
+      <tr><td class="num"><%= c.curated_position + 1 %></td><td><%= c.requested_title %></td><td class="small"><%= c.domain %></td>
+        <td><span class="tag"><%= c.resolution_status %></span></td>
+        <td class="small"><% if (c.resolution_status === 'resolved' || c.resolution_status === 'redirect') { %><a href="/articles/<%= c.article_id %>"><%= c.canonical_title %></a><% } else if (c.resolution_status === 'duplicate') { %>same page as “<%= c.duplicate_of %>” (<%= c.canonical_title %>)<% } else { %><%= c.resolution_reason %><% } %></td></tr>
+    <% } %>
+    </tbody>
+  </table></div>
+</div>
+<%- include('partials/foot') %>

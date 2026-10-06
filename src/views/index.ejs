@@ -1,0 +1,37 @@
+<%- include('partials/head') %>
+<h1>A time machine for Wikipedia</h1>
+<p class="secondary">Pick a scientific article, pick a moment, and read the article exactly as it stood on English Wikipedia at that moment — reconstructed from <%= fmtNum(summary.stats.revisions) %> stored revisions by MariaDB temporal queries.</p>
+
+<div class="stats card">
+  <div class="stat"><div class="value"><%= fmtNum(summary.stats.articles) %></div><div class="label">articles ingested</div></div>
+  <div class="stat"><div class="value"><%= fmtNum(summary.stats.revisions) %></div><div class="label">revisions (events)</div></div>
+  <div class="stat"><div class="value"><%= fmtBytes(summary.stats.raw_bytes) %></div><div class="label">distinct wikitext</div></div>
+  <div class="stat"><div class="value"><%= fmtBytes(summary.stats.stored_bytes) %></div><div class="label">stored (chunked Brotli)</div></div>
+  <div class="stat"><div class="value"><%= fmtNum(summary.stats.history_rows) %></div><div class="label">system-history rows</div></div>
+</div>
+
+<div class="notice">
+  <strong>Two clocks.</strong> <span class="tag app">valid time</span> is when a revision was the live text <em>on Wikipedia</em>; it comes from Wikipedia’s revision timestamps.
+  <span class="tag sys">system time</span> is when <em>this database</em> stored a row; MariaDB maintains it automatically (<code>WITH SYSTEM VERSIONING</code>).
+  The time machine navigates valid time. <a href="/about">Why both are needed →</a>
+</div>
+
+<h2>Articles</h2>
+<div class="filters">
+  <input type="search" id="article-search" placeholder="Search titles…" aria-label="Search titles">
+  <select id="domain-filter" aria-label="Filter by domain">
+    <option value="">All domains</option>
+    <% for (const d of domains) { %><option value="<%= d %>"><%= d %></option><% } %>
+  </select>
+  <span id="article-count" class="muted small"></span>
+</div>
+<ul class="article-list" id="article-list">
+  <% for (const a of articles) { %>
+  <li data-title="<%= (a.canonical_title + ' ' + a.requested_title).toLowerCase() %>" data-domain="<%= a.domain %>">
+    <a href="/articles/<%= a.article_id %>"><%= a.canonical_title %></a>
+    <div class="meta"><%= a.domain %> · <%= fmtNum(a.revisions) %> revisions<% if (a.is_redirect) { %> · requested as “<%= a.requested_title %>”<% } %></div>
+  </li>
+  <% } %>
+</ul>
+<% if (!articles.length) { %><div class="notice">No articles yet — run <code>npm run ingest</code>.</div><% } %>
+<%- include('partials/foot') %>

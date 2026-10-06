@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> · Wikipedia Time Machine</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="brand" href="/">Wikipedia Time Machine</a>
+    <nav class="nav"><a href="/">Articles</a><a href="/about">Dataset &amp; model</a></nav>
+    <span class="coverage-pill" title="Application-time coverage of the imported dataset">
+      Coverage <span class="mono"><%= coverage.startIso %></span> → <span class="mono"><%= coverage.endIso %></span>
+    </span>
+  </div>
+</header>
+<main>

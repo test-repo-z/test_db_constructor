@@ -1,0 +1,10 @@
+<%- include('partials/head') %>
+<p class="small"><a href="/articles/<%= article.article_id %>">← <%= article.canonical_title %></a></p>
+<h1>Compare two moments — <%= article.canonical_title %></h1>
+<form class="inline card" method="get">
+  <label>Earlier (UTC)<input type="datetime-local" name="a" step="1" required min="<%= inputValue(coverage.startIso) %>" max="<%= inputValue(coverage.endIso) %>" value="<%= inputValue(a || coverage.startIso) %>"></label>
+  <label>Later (UTC)<input type="datetime-local" name="b" step="1" required min="<%= inputValue(coverage.startIso) %>" max="<%= inputValue(coverage.endIso) %>" value="<%= inputValue(b || coverage.endIso) %>"></label>
+  <label>Mode<select name="mode"><option value="wikitext">Wikitext lines</option><option value="text">Readable text</option></select></label>
+  <button type="submit">Compare</button>
+</form>
+<%- include('partials/foot') %>

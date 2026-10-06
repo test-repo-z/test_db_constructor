@@ -1,0 +1,42 @@
+{
+  "name": "wikipedia-time-machine",
+  "version": "1.0.0",
+  "description": "A time machine for Wikipedia built on MariaDB system-versioned (bitemporal) tables.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "demo": "node scripts/demo.js",
+    "setup-env": "node scripts/setup-env.js",
+    "explore": "node scripts/explore-temporal.js",
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "wait-db": "node scripts/wait-for-db.js",
+    "migrate": "node scripts/migrate.js",
+    "db:reset": "node scripts/db-reset.js",
+    "resolve-articles": "node scripts/resolve-articles.js",
+    "ingest": "node scripts/ingest.js",
+    "replay-mirror": "node scripts/replay-mirror.js",
+    "validate": "node scripts/validate.js",
+    "benchmark": "node scripts/benchmark.js",
+    "test": "npm run test:unit && npm run test:integration && npm run test:e2e",
+    "test:unit": "node --test --test-concurrency=1 \"tests/unit/*.test.js\"",
+    "test:integration": "node --test --test-concurrency=1 \"tests/integration/*.test.js\"",
+    "test:e2e": "node --test --test-concurrency=1 \"tests/e2e/*.test.js\""
+  },
+  "license": "MIT",
+  "dependencies": {
+    "diff": "^8.0.4",
+    "dotenv": "^16.6.1",
+    "ejs": "^3.1.10",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "mariadb": "^3.5.4",
+    "sanitize-html": "^2.18.0",
+    "wtf_wikipedia": "^10.4.2",
+    "wtf-plugin-html": "^1.0.0"
+  }
+}

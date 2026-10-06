@@ -1,0 +1,71 @@
+<%- include('partials/head') %>
+<p class="small"><a href="/">← All articles</a></p>
+<h1><%= article.canonical_title %></h1>
+<p class="secondary"><%= article.domain %> · <a href="<%= article.canonical_url %>" rel="noopener noreferrer" target="_blank">current version on Wikipedia</a>
+  <% if (article.is_redirect) { %> · requested as “<%= article.requested_title %>” (redirect)<% } %></p>
+
+<div class="card">
+  <h2 class="first">Travel to a moment</h2>
+  <form class="inline" method="get" action="/articles/<%= article.article_id %>/as-of">
+    <label>Instant (UTC)
+      <input type="datetime-local" name="t" step="1" required min="<%= inputValue(coverage.startIso) %>" max="<%= inputValue(coverage.endIso) %>" value="<%= inputValue('2023-06-01T12:00:00') %>">
+    </label>
+    <button type="submit">Show article as of this instant</button>
+  </form>
+  <p class="small muted">Available range: <span class="mono"><%= coverage.startIso %></span> → <span class="mono"><%= coverage.endIso %></span> (UTC). Instants outside it are rejected rather than guessed.</p>
+  <p class="quick small">Quick picks:
+    <a href="/articles/<%= article.article_id %>/as-of?t=<%= coverage.startIso %>">window start</a>
+    <% for (const day of [...new Set(checkpoints.map((c) => c.synced_through_iso))].filter((d) => d !== coverage.endIso).sort()) { %><a href="/articles/<%= article.article_id %>/as-of?t=<%= day %>"><%= day.slice(0, 10) %></a><% } %>
+    <a href="/articles/<%= article.article_id %>/as-of?t=<%= coverage.endIso %>">window end</a>
+  </p>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <h2 class="first">Compare two moments</h2>
+    <form method="get" action="/articles/<%= article.article_id %>/diff">
+      <div class="form inline">
+        <label>Earlier (UTC)<input type="datetime-local" name="a" step="1" required min="<%= inputValue(coverage.startIso) %>" max="<%= inputValue(coverage.endIso) %>" value="<%= inputValue(coverage.startIso) %>"></label>
+        <label>Later (UTC)<input type="datetime-local" name="b" step="1" required min="<%= inputValue(coverage.startIso) %>" max="<%= inputValue(coverage.endIso) %>" value="<%= inputValue(coverage.endIso) %>"></label>
+        <label>Mode<select name="mode"><option value="wikitext">Wikitext lines</option><option value="text">Readable text</option></select></label>
+        <button type="submit">Compare</button>
+      </div>
+    </form>
+  </div>
+  <div class="card">
+    <h2 class="first">Inspect the temporal data</h2>
+    <dl class="meta">
+      <dt>Revisions stored</dt><dd><%= fmtNum(bounds.revisions) %></dd>
+      <dt>Timeline intervals</dt><dd><%= fmtNum(bounds.intervals) %></dd>
+      <dt>Known since</dt><dd class="mono"><%= fmtTime(bounds.first_from) %></dd>
+      <dt>Synchronised</dt><dd class="mono"><%= article.synced_through ? fmtTime(article.synced_through) : 'not yet' %></dd>
+    </dl>
+    <p><a href="/articles/<%= article.article_id %>/history">Revision history (valid time)</a> · <a href="/articles/<%= article.article_id %>/temporal">Temporal lab: AS OF / BETWEEN / ALL</a></p>
+  </div>
+</div>
+
+<% const chart = monthlyChart(perMonth, coverage); %>
+<div class="card">
+  <h2 class="first">Edits per month</h2>
+  <p class="small muted">Click a month to see the article as it was at the end of that month.</p>
+  <svg class="chart" viewBox="0 0 <%= chart.width %> <%= chart.height %>" role="img" aria-label="Edits per month for <%= article.canonical_title %>; maximum <%= chart.max %> in one month">
+    <% for (const t of chart.ticks) { %>
+      <line class="grid" x1="<%= chart.padLeft %>" x2="<%= chart.width - 4 %>" y1="<%= t.y %>" y2="<%= t.y %>"></line>
+      <text class="axis-label" x="<%= chart.padLeft - 6 %>" y="<%= t.y + 4 %>" text-anchor="end"><%= fmtNum(t.v) %></text>
+    <% } %>
+    <% for (const y of chart.years) { %><text class="axis-label" x="<%= y.x %>" y="<%= chart.height - 6 %>"><%= y.label %></text><% } %>
+    <% for (const b of chart.bars) { %>
+      <a href="/articles/<%= article.article_id %>/as-of?t=<%= monthEnd(b.month, coverage.endIso) %>" data-tip="<%= b.month %>: <%= b.edits %> edit<%= b.edits === 1 ? '' : 's' %>">
+        <rect class="hit" x="<%= b.slotX %>" y="0" width="<%= b.slotW %>" height="<%= chart.baseline %>"></rect>
+        <% if (b.h > 0) { %><path class="col" d="<%= columnPath(b) %>"></path><% } %>
+        <title><%= b.month %>: <%= b.edits %> edits</title>
+      </a>
+    <% } %>
+  </svg>
+  <details><summary class="small">Table view</summary>
+    <div class="table-wrap"><table><thead><tr><th>Month</th><th class="num">Edits</th></tr></thead><tbody>
+    <% for (const b of chart.bars) { %><tr><td><%= b.month %></td><td class="num"><%= b.edits %></td></tr><% } %>
+    </tbody></table></div>
+  </details>
+</div>
+<%- include('partials/foot') %>

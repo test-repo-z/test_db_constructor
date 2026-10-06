@@ -1,0 +1,19 @@
+# MariaDB server settings for the Wikipedia Time Machine.
+[mariadb]
+# All application timestamps are UTC; make the server default match.
+default_time_zone = '+00:00'
+
+# Required by `npm run replay-mirror`, which sets the session clock to Wikipedia
+# revision times to simulate a database that was live on Wikipedia. NO is the MariaDB
+# default; it is stated explicitly because it is a security-relevant choice:
+# with YES, nobody (not even root) could forge system-versioning timestamps.
+secure_timestamp = NO
+
+# Content chunks are a few MB at most; keep headroom for multi-row inserts.
+max_allowed_packet = 64M
+
+innodb_buffer_pool_size = 512M
+innodb_log_file_size = 256M
+
+# Useful when inspecting temporal query plans.
+slow_query_log = OFF
