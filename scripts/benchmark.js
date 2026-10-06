@@ -14,6 +14,9 @@ import { isMain, parseArgs } from '../src/lib/cli.js';
 import { createLogger } from '../src/lib/logger.js';
 import { lookupSuite, partitionSuite, storageSuite } from '../src/benchmark/suites.js';
 import { renderReport } from '../src/benchmark/report.js';
+import { ident } from '../src/db/sql.js';
+
+const BENCH_TABLES = ['bench_mirror_flat', 'bench_stress_none', 'bench_stress_year', 'bench_stress_month'];
 
 const log = createLogger('benchmark');
 
@@ -50,13 +53,13 @@ export async function main(args = parseArgs()) {
       out.suites.partition = await partitionSuite(conn, { scale: Number(args.scale ?? 16), reps: Number(args.reps ?? 3),
         pointQueries: Number(args['point-queries'] ?? 500), scanQueries: Number(args['scan-queries'] ?? 15) });
       // Free the disk space of the derived tables before the storage suite writes its own.
-      if (!args['keep-tables']) for (const t of ['bench_stress_none', 'bench_stress_year', 'bench_stress_month']) await conn.query(`DROP TABLE IF EXISTS ${t}`);
+      if (!args['keep-tables']) for (const t of BENCH_TABLES.slice(1)) await conn.query(`DROP TABLE IF EXISTS ${ident(t, BENCH_TABLES)}`);
     }
     if (suites.includes('storage')) {
       out.suites.storage = await storageSuite(conn, pool, { inlineArticles: Number(args['inline-articles'] ?? 5), keepTables: Boolean(args['keep-tables']) });
     }
     if (!args['keep-tables']) {
-      for (const t of ['bench_mirror_flat', 'bench_stress_none', 'bench_stress_year', 'bench_stress_month']) await conn.query(`DROP TABLE IF EXISTS ${t}`);
+      for (const t of BENCH_TABLES) await conn.query(`DROP TABLE IF EXISTS ${ident(t, BENCH_TABLES)}`);
     }
     out.durationSeconds = (Date.now() - started) / 1000;
 

@@ -3,10 +3,12 @@
 // Rows are only UPDATEd when a resolution fact actually changed. This matters because
 // `articles` is system-versioned: an unconditional UPDATE would create a history row on
 // every run, burying the genuinely interesting events (a page rename, a new redirect).
+import { ident } from '../db/sql.js';
 
 const FIELDS = ['curated_position', 'domain_id', 'resolution_status', 'canonical_title', 'page_id', 'canonical_url',
   'is_redirect', 'is_disambiguation', 'redirect_fragment', 'duplicate_of_article_id', 'resolution_reason'];
 
+const INSERT_COLUMNS = ['requested_title', ...FIELDS];
 const norm = (v) => (typeof v === 'boolean' ? Number(v) : v ?? null);
 
 export function desiredRow(record, position, domainId, duplicateOfId) {
@@ -49,7 +51,8 @@ export async function syncCatalog(conn, records) {
     if (!have) {
       const cols = Object.keys(want);
       const res = await conn.query(
-        `INSERT INTO articles (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`, cols.map((c) => want[c]));
+        `INSERT INTO articles (${cols.map((c) => ident(c, INSERT_COLUMNS)).join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
+        cols.map((c) => want[c]));
       existing.set(record.requested_title, { ...want, article_id: res.insertId });
       stats.inserted++;
       return;
@@ -57,7 +60,7 @@ export async function syncCatalog(conn, records) {
     const diff = changedFields(have, want);
     if (!diff.length) { stats.unchanged++; return; }
     await conn.query(
-      `UPDATE articles SET ${diff.map((f) => `${f} = ?`).join(', ')} WHERE article_id = ?`,
+      `UPDATE articles SET ${diff.map((f) => `${ident(f, FIELDS)} = ?`).join(', ')} WHERE article_id = ?`,
       [...diff.map((f) => want[f]), have.article_id]);
     existing.set(record.requested_title, { ...have, ...want });
     stats.updated++;

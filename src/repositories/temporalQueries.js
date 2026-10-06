@@ -5,10 +5,6 @@
 //   APPLICATION time  article_history.valid_from / valid_to   "when was this the text on Wikipedia?"
 //   SYSTEM time       row_start / row_end, FOR SYSTEM_TIME    "when did the database hold this row?"
 
-export const REVISION_COLUMNS = `
-  r.rev_id, r.parent_rev_id, r.rev_timestamp, r.editor, r.editor_hidden, r.comment, r.comment_hidden,
-  r.is_minor, r.size_bytes, r.sha1, r.content_status, r.is_baseline`;
-
 /**
  * Q1 — Application-time lookup (the main "time machine" query).
  * "Which revision was the visible version of article A on Wikipedia at instant T?"
@@ -17,7 +13,9 @@ export const REVISION_COLUMNS = `
  * the first row: one index entry examined, however long the article's history is.
  */
 export const SQL_REVISION_AT = `
-SELECT h.valid_from, h.valid_to, ${REVISION_COLUMNS}
+SELECT h.valid_from, h.valid_to,
+  r.rev_id, r.parent_rev_id, r.rev_timestamp, r.editor, r.editor_hidden, r.comment, r.comment_hidden,
+  r.is_minor, r.size_bytes, r.sha1, r.content_status, r.is_baseline
 FROM article_history AS h
 JOIN revisions AS r ON r.rev_id = h.rev_id
 WHERE h.article_id = ?
@@ -32,7 +30,9 @@ LIMIT 1`;
  * clause then applies the application-time predicate to that past belief.
  */
 export const SQL_REVISION_AT_KNOWN_AT = `
-SELECT h.valid_from, h.valid_to, h.row_start, h.row_end, ${REVISION_COLUMNS}
+SELECT h.valid_from, h.valid_to, h.row_start, h.row_end,
+  r.rev_id, r.parent_rev_id, r.rev_timestamp, r.editor, r.editor_hidden, r.comment, r.comment_hidden,
+  r.is_minor, r.size_bytes, r.sha1, r.content_status, r.is_baseline
 FROM article_history FOR SYSTEM_TIME AS OF TIMESTAMP ? AS h
 JOIN revisions AS r ON r.rev_id = h.rev_id
 WHERE h.article_id = ?
@@ -52,7 +52,9 @@ WHERE m.article_id = ?`;
 
 /** Application-time range: revisions whose validity overlaps [from, to]. */
 export const SQL_HISTORY_OVERLAPPING = `
-SELECT h.valid_from, h.valid_to, ${REVISION_COLUMNS}
+SELECT h.valid_from, h.valid_to,
+  r.rev_id, r.parent_rev_id, r.rev_timestamp, r.editor, r.editor_hidden, r.comment, r.comment_hidden,
+  r.is_minor, r.size_bytes, r.sha1, r.content_status, r.is_baseline
 FROM article_history AS h
 JOIN revisions AS r ON r.rev_id = h.rev_id
 WHERE h.article_id = ?

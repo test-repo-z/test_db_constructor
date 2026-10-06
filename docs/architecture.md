@@ -36,6 +36,7 @@
 | Content | `src/content/chunks.js` | chunking, Brotli (16 MiB window), SHA-1 verification on every read |
 | Ingestion | `src/ingestion/` | catalogue sync, per-article transactional sync, checkpoints, advisory lock, mirror replay |
 | Repositories | `src/repositories/` | **all SQL of the web app**; `temporalQueries.js` holds the documented temporal SQL |
+| Reusable SQL | `sql/` | the temporal patterns as standalone, runnable `.sql` files (asserted in `tests/integration/sql-files.test.js`) |
 | Services | `src/services/` | time-machine logic (coverage, reconstruction, bitemporal view), diff, rendering + sanitisation |
 | HTTP | `src/routes/`, `src/controllers/`, `src/middleware/`, `src/app.js` | routing, validation errors → HTTP codes, CSP/security headers, rate limiting |
 | Views | `src/views/*.ejs`, `src/public/` | server-rendered pages; JS only for list filtering and chart tooltips |
@@ -66,7 +67,9 @@ and is shown on the pages that use it.
 
 ## Security measures
 
-* **SQL injection:** every value is a bound parameter; identifiers are never built from input. The web tier's
+* **SQL injection:** every value is a bound parameter. Identifiers that must be named dynamically (benchmark
+  tables, catalogue columns, partition names) go through `ident()` in `src/db/sql.js` (whitelist + strict pattern +
+  back-quoting); numbers that must appear in SQL text go through `boundedInt()`. The web tier's
   account is read-only, so even a bug could not modify data or purge history.
 * **Input validation:** ids must be integers; instants must match a strict grammar and be real calendar dates;
   ranges are checked; unknown checkpoints and modes are rejected (400/422 with clear messages).

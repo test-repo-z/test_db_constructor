@@ -4,9 +4,16 @@ import { measure, plans, prng } from './measure.js';
 import { datasetCoverage, toSql } from '../temporal/time.js';
 import { ContentRepository } from '../repositories/contentRepository.js';
 import { createLogger } from '../lib/logger.js';
+import { ident, boundedInt } from '../db/sql.js';
 
 const log = createLogger('bench');
-const SYSTEM_MAX = "TIMESTAMP'2106-02-07 06:28:15.999999'";
+
+// Every table this module names dynamically; anything else is rejected by ident() before it reaches SQL text.
+const KNOWN_TABLES = Object.freeze(['articles', 'revisions', 'article_history', 'page_mirror', 'content_chunks', 'revision_texts',
+  'article_sync_state', 'bench_mirror_flat', 'bench_stress_none', 'bench_stress_year', 'bench_stress_month',
+  'bench_inline_plain', 'bench_inline_compressed']);
+const T = (name) => ident(name, KNOWN_TABLES);
+const INLINE_TEXT_TYPES = Object.freeze({ bench_inline_plain: 'MEDIUMTEXT', bench_inline_compressed: 'MEDIUMTEXT COMPRESSED' });
 
 function randomInstants(rand, n, startMs, endMs) {
   return Array.from({ length: n }, () => toSql(new Date(startMs + Math.floor(rand() * ((endMs - startMs) / 1000)) * 1000)));
@@ -124,18 +131,20 @@ export const PARTITION_LAYOUTS = [
 ];
 
 export async function buildStressTables(conn, scale) {
+  const sequence = ident(`seq_0_to_${boundedInt(scale - 1, 0, 999, 'scale - 1')}`);
   for (const l of PARTITION_LAYOUTS) {
-    await conn.query(`DROP TABLE IF EXISTS ${l.table}`);
-    await conn.query(`CREATE TABLE ${l.table} (${MIRROR_COLUMNS}) ENGINE=InnoDB WITH SYSTEM VERSIONING ${l.ddl}`);
+    await conn.query(`DROP TABLE IF EXISTS ${T(l.table)}`);
+    // MIRROR_COLUMNS and l.ddl are constant DDL fragments defined in this file.
+    await conn.query(`CREATE TABLE ${T(l.table)} (${MIRROR_COLUMNS}) ENGINE=InnoDB WITH SYSTEM VERSIONING ${l.ddl}`);
     await conn.query('SET @@system_versioning_insert_history = 1');
     const t = Date.now();
     // seq_0_to_N is MariaDB's SEQUENCE engine: K copies, article ids shifted by k * 1,000,000,
     // timestamps untouched — the temporal distribution of the real data is preserved exactly.
-    await conn.query(`INSERT INTO ${l.table} (article_id, rev_id, rev_timestamp, sha1, size_bytes, row_start, row_end)
+    await conn.query(`INSERT INTO ${T(l.table)} (article_id, rev_id, rev_timestamp, sha1, size_bytes, row_start, row_end)
       SELECT m.article_id + s.seq * 1000000, m.rev_id, m.rev_timestamp, m.sha1, m.size_bytes, m.row_start, m.row_end
-      FROM page_mirror FOR SYSTEM_TIME ALL AS m CROSS JOIN seq_0_to_${scale - 1} AS s`);
+      FROM page_mirror FOR SYSTEM_TIME ALL AS m CROSS JOIN ${sequence} AS s`);
     await conn.query('SET @@system_versioning_insert_history = 0');
-    await conn.query(`ANALYZE TABLE ${l.table}`);
+    await conn.query(`ANALYZE TABLE ${T(l.table)}`);
     l.buildSeconds = (Date.now() - t) / 1000;
   }
 }
@@ -146,8 +155,8 @@ async function tableInfo(conn, table) {
   const [{ versioned }] = await conn.query(`SELECT COUNT(*) AS versioned FROM information_schema.TABLES
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND TABLE_TYPE = 'SYSTEM VERSIONED'`, [table]);
   const [{ total, current }] = versioned
-    ? await conn.query(`SELECT COUNT(*) AS total, SUM(row_end = ${SYSTEM_MAX}) AS current FROM ${table} FOR SYSTEM_TIME ALL`)
-    : await conn.query(`SELECT COUNT(*) AS total, COUNT(*) AS current FROM ${table}`);
+    ? await conn.query(`SELECT COUNT(*) AS total, SUM(row_end = TIMESTAMP'2106-02-07 06:28:15.999999') AS current FROM ${T(table)} FOR SYSTEM_TIME ALL`)
+    : await conn.query(`SELECT COUNT(*) AS total, COUNT(*) AS current FROM ${T(table)}`);
   const parts = await conn.query(`SELECT PARTITION_NAME AS name, PARTITION_DESCRIPTION AS upper_bound, TABLE_ROWS AS approx_rows
     FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND PARTITION_NAME IS NOT NULL ORDER BY PARTITION_ORDINAL_POSITION`, [table]);
   // Real file sizes need the global PROCESS privilege; without it they are reported as n/a.
@@ -157,8 +166,9 @@ async function tableInfo(conn, table) {
     allocated_size: files[0]?.allocated ?? null, partitions: parts.length };
 }
 
-export async function partitionSuite(conn, { scale = 16, pointQueries = 500, scanQueries = 15, reps = 3, seed = 7, purge = true } = {}) {
+export async function partitionSuite(conn, { scale: scaleArg = 16, pointQueries = 500, scanQueries = 15, reps = 3, seed = 7, purge = true } = {}) {
   const cov = datasetCoverage();
+  const scale = boundedInt(scaleArg, 1, 1000, '--scale');
   log.info(`partition: building derived stress tables (scale ${scale})`);
   await buildStressTables(conn, scale);
   const articles = (await conn.query('SELECT DISTINCT article_id FROM page_mirror ORDER BY article_id')).map((r) => r.article_id);
@@ -193,7 +203,7 @@ export async function partitionSuite(conn, { scale = 16, pointQueries = 500, sca
     let reference = null;
     for (const l of PARTITION_LAYOUTS) {
       log.info(`partition: ${q.key} on ${l.table}`);
-      const sql = q.sql(l.table);
+      const sql = q.sql(T(l.table));
       const m = await measure(conn, sql, q.params, { reps });
       const answers = JSON.stringify(m.firstResults.map((rows) => Object.values(rows[0] ?? {})));
       if (reference === null) reference = answers;
@@ -207,18 +217,18 @@ export async function partitionSuite(conn, { scale = 16, pointQueries = 500, sca
   const maintenance = [];
   if (purge) {
     const cutoff = '2023-01-01 00:00:00';
-    const run = async (table, label, sql) => {
-      const before = (await conn.query(`SELECT COUNT(*) AS n FROM ${table} FOR SYSTEM_TIME ALL`))[0].n;
+    const run = async (table, label, sql, params = []) => {
+      const before = (await conn.query(`SELECT COUNT(*) AS n FROM ${T(table)} FOR SYSTEM_TIME ALL`))[0].n;
       const t = process.hrtime.bigint();
-      await conn.query(sql);
+      await conn.query(sql, params);
       const ms = Number(process.hrtime.bigint() - t) / 1e6;
-      const after = (await conn.query(`SELECT COUNT(*) AS n FROM ${table} FOR SYSTEM_TIME ALL`))[0].n;
-      maintenance.push({ table, label, sql, ms: Math.round(ms * 10) / 10, rows_removed: before - after });
+      const after = (await conn.query(`SELECT COUNT(*) AS n FROM ${T(table)} FOR SYSTEM_TIME ALL`))[0].n;
+      maintenance.push({ table, label, sql: params.length ? `${sql}  -- ? = '${params[0]}'` : sql, ms: Math.round(ms * 10) / 10, rows_removed: before - after });
     };
     log.info('partition: retention purge');
-    await run('bench_stress_none', 'row-by-row purge', `DELETE HISTORY FROM bench_stress_none BEFORE SYSTEM_TIME TIMESTAMP '${cutoff}'`);
+    await run('bench_stress_none', 'row-by-row purge', 'DELETE HISTORY FROM bench_stress_none BEFORE SYSTEM_TIME TIMESTAMP ?', [cutoff]);
     await run('bench_stress_year', 'drop whole history partitions', 'ALTER TABLE bench_stress_year DROP PARTITION p0, p1');
-    await run('bench_stress_month', 'DELETE HISTORY on a partitioned table', `DELETE HISTORY FROM bench_stress_month BEFORE SYSTEM_TIME TIMESTAMP '${cutoff}'`);
+    await run('bench_stress_month', 'DELETE HISTORY on a partitioned table', 'DELETE HISTORY FROM bench_stress_month BEFORE SYSTEM_TIME TIMESTAMP ?', [cutoff]);
   }
   return { scale, pointQueries, scanQueries, reps, seed, derived: true, tables, results, maintenance };
 }
@@ -239,12 +249,12 @@ export async function storageSuite(conn, pool, { inlineArticles = 5, keepTables 
       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'page_mirror' ORDER BY PARTITION_ORDINAL_POSITION`)) {
     // Explicit partition selection returns that partition's rows (history included); MariaDB rejects
     // combining PARTITION (...) with FOR SYSTEM_TIME (error 4142), so no temporal clause here.
-    const [{ n, bytes }] = await conn.query(`SELECT COUNT(*) AS n, COALESCE(SUM(size_bytes), 0) AS bytes FROM page_mirror PARTITION (${p.name})`);
+    const [{ n, bytes }] = await conn.query(`SELECT COUNT(*) AS n, COALESCE(SUM(size_bytes), 0) AS bytes FROM page_mirror PARTITION (${ident(p.name)})`);
     mirrorPartitions.push({ ...p, rows: n, inline_text_bytes_if_stored: bytes });
   }
   const growth = await conn.query(`SELECT YEAR(row_end) AS year, COUNT(*) AS closed_versions FROM page_mirror FOR SYSTEM_TIME ALL
-      WHERE row_end < ${SYSTEM_MAX} GROUP BY YEAR(row_end) ORDER BY 1`);
-  const ahHistory = await conn.query(`SELECT COUNT(*) AS n FROM article_history FOR SYSTEM_TIME ALL WHERE row_end < ${SYSTEM_MAX}`);
+      WHERE row_end < TIMESTAMP'2106-02-07 06:28:15.999999' GROUP BY YEAR(row_end) ORDER BY 1`);
+  const ahHistory = await conn.query("SELECT COUNT(*) AS n FROM article_history FOR SYSTEM_TIME ALL WHERE row_end < TIMESTAMP'2106-02-07 06:28:15.999999'");
 
   // Inline-text experiment: the naive "history for free" design stores the full text in the
   // versioned row. Replay real revisions of a few articles (chosen at size quantiles) into two
@@ -253,9 +263,9 @@ export async function storageSuite(conn, pool, { inlineArticles = 5, keepTables 
   const picks = [...new Set(Array.from({ length: inlineArticles }, (_, i) => sizes[Math.floor(((i + 0.5) / inlineArticles) * sizes.length)]?.article_id))].filter(Boolean);
   const content2 = new ContentRepository(pool, { maxCacheBytes: 64 * 1024 * 1024 });
   const inline = [];
-  for (const [table, type] of [['bench_inline_plain', 'MEDIUMTEXT'], ['bench_inline_compressed', 'MEDIUMTEXT COMPRESSED']]) {
-    await conn.query(`DROP TABLE IF EXISTS ${table}`);
-    await conn.query(`CREATE TABLE ${table} (article_id INT UNSIGNED PRIMARY KEY, rev_id BIGINT UNSIGNED NOT NULL, wikitext ${type} NULL)
+  for (const [table, type] of Object.entries(INLINE_TEXT_TYPES)) { // column types are the constants above
+    await conn.query(`DROP TABLE IF EXISTS ${T(table)}`);
+    await conn.query(`CREATE TABLE ${T(table)} (article_id INT UNSIGNED PRIMARY KEY, rev_id BIGINT UNSIGNED NOT NULL, wikitext ${type} NULL)
       ENGINE=InnoDB WITH SYSTEM VERSIONING`);
   }
   const revRows = await conn.query(`SELECT rev_id, article_id, rev_timestamp, sha1 FROM revisions WHERE article_id IN (${picks.map(() => '?').join(',')})
@@ -266,18 +276,18 @@ export async function storageSuite(conn, pool, { inlineArticles = 5, keepTables 
     const text = r.sha1 ? await content2.textBySha1(r.sha1) : null;
     rawBytes += text ? Buffer.byteLength(text) : 0;
     await conn.query('SET timestamp = UNIX_TIMESTAMP(?)', [r.rev_timestamp]);
-    for (const table of ['bench_inline_plain', 'bench_inline_compressed']) {
-      await conn.query(`INSERT INTO ${table} (article_id, rev_id, wikitext) VALUES (?, ?, ?)
+    for (const table of Object.keys(INLINE_TEXT_TYPES)) {
+      await conn.query(`INSERT INTO ${T(table)} (article_id, rev_id, wikitext) VALUES (?, ?, ?)
         ON DUPLICATE KEY UPDATE rev_id = VALUES(rev_id), wikitext = VALUES(wikitext)`, [r.article_id, r.rev_id, text]);
     }
   }
   await conn.query('SET timestamp = DEFAULT');
-  for (const table of ['bench_inline_plain', 'bench_inline_compressed']) {
-    await conn.query(`OPTIMIZE TABLE ${table}`).catch(() => {});
+  for (const table of Object.keys(INLINE_TEXT_TYPES)) {
+    await conn.query(`OPTIMIZE TABLE ${T(table)}`).catch(() => {});
     inline.push({ table, ...(await tableInfo(conn, table)) });
   }
   const [chunkBytes] = await conn.query(`SELECT SUM(stored_bytes) AS stored, SUM(raw_bytes) AS raw FROM content_chunks WHERE article_id IN (${picks.map(() => '?').join(',')})`, picks);
-  if (!keepTables) for (const table of ['bench_inline_plain', 'bench_inline_compressed']) await conn.query(`DROP TABLE ${table}`);
+  if (!keepTables) for (const table of Object.keys(INLINE_TEXT_TYPES)) await conn.query(`DROP TABLE ${T(table)}`);
   const pickInfo = await conn.query(`SELECT a.article_id, a.canonical_title, COUNT(r.rev_id) AS revisions, SUM(r.size_bytes) AS bytes FROM articles a
       JOIN revisions r ON r.article_id = a.article_id WHERE a.article_id IN (${picks.map(() => '?').join(',')}) GROUP BY a.article_id ORDER BY bytes`, picks);
   return {

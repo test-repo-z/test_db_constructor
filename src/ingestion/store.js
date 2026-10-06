@@ -137,13 +137,11 @@ export async function insertCheckpoint(conn, runId, through, articlesSynced) {
 
 // MariaDB advisory (named) lock: only one writer (ingestion or mirror replay) per database.
 // Named locks are server-wide, so the name is scoped by the current database.
-const LOCK_NAME = "CONCAT(DATABASE(), '.ingest')";
-
 export async function acquireIngestLock(conn) {
-  const [{ ok }] = await conn.query(`SELECT GET_LOCK(${LOCK_NAME}, 0) AS ok`);
+  const [{ ok }] = await conn.query("SELECT GET_LOCK(CONCAT(DATABASE(), '.ingest'), 0) AS ok");
   return ok === 1;
 }
 
 export async function releaseIngestLock(conn) {
-  await conn.query(`SELECT RELEASE_LOCK(${LOCK_NAME})`);
+  await conn.query("SELECT RELEASE_LOCK(CONCAT(DATABASE(), '.ingest'))");
 }

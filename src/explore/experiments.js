@@ -6,7 +6,9 @@
 //
 // Every experiment creates its own `explore_*` table and drops it afterwards.
 
-const SYSTEM_MAX = "TIMESTAMP'2106-02-07 06:28:15.999999'";
+import { ident } from '../db/sql.js';
+
+const SCRATCH_TABLES = Object.freeze(['explore_trx', 'explore_ts', 'explore_col', 'explore_asof', 'explore_upd', 'explore_add', 'explore_tr', 'explore_zero']);
 
 class Recorder {
   constructor(conn, id, title, why) {
@@ -146,7 +148,7 @@ export const EXPERIMENTS = [
       const cur = await rec.run('SELECT v, f, t FROM explore_upd ORDER BY f');
       rec.claim('one row becomes three: [Jan, Apr) a, [Apr, Jun) b, [Jun, Dec) a',
         cur.map((r) => `${r.v}:${r.f}..${r.t}`).join(' ') === 'a:2022-01-01..2022-04-01 b:2022-04-01..2022-06-01 a:2022-06-01..2022-12-31', cur);
-      const hist = await count(rec, `SELECT COUNT(*) AS n FROM explore_upd FOR SYSTEM_TIME ALL WHERE row_end < ${SYSTEM_MAX}`);
+      const hist = await count(rec, "SELECT COUNT(*) AS n FROM explore_upd FOR SYSTEM_TIME ALL WHERE row_end < TIMESTAMP'2106-02-07 06:28:15.999999'");
       rec.claim('the original full-year row is kept as one system-history version', hist === 1, hist);
       await rec.run('DROP TABLE explore_upd');
     },
@@ -216,8 +218,8 @@ export async function runExperiments(conn, { only } = {}) {
     } finally {
       await conn.query('SET timestamp = DEFAULT').catch(() => {});
       await conn.query('SET @@system_versioning_asof = DEFAULT').catch(() => {});
-      for (const t of ['explore_trx', 'explore_ts', 'explore_col', 'explore_asof', 'explore_upd', 'explore_add', 'explore_tr', 'explore_zero']) {
-        await conn.query(`DROP TABLE IF EXISTS ${t}`).catch(() => {});
+      for (const t of SCRATCH_TABLES) {
+        await conn.query(`DROP TABLE IF EXISTS ${ident(t, SCRATCH_TABLES)}`).catch(() => {});
       }
     }
     reports.push(rec.report());

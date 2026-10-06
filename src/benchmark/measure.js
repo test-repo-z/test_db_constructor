@@ -72,7 +72,10 @@ export async function measure(conn, sql, paramSets, { reps = 3, warmup = true } 
   };
 }
 
-/** EXPLAIN (traditional) + ANALYZE FORMAT=JSON for one representative parameter set. */
+/**
+ * EXPLAIN (traditional) + ANALYZE FORMAT=JSON for one representative parameter set.
+ * `sql` is always one of the statement constants of suites.js (never input); its values stay bound as `?`.
+ */
 export async function plans(conn, sql, params) {
   const explain = await conn.query(`EXPLAIN PARTITIONS ${sql}`, params).catch(() => conn.query(`EXPLAIN ${sql}`, params));
   const analyze = await conn.query(`ANALYZE FORMAT=JSON ${sql}`, params);

@@ -7,6 +7,7 @@ import { createConnection } from '../src/db/pool.js';
 import { createLogger } from '../src/lib/logger.js';
 import { isMain, parseArgs } from '../src/lib/cli.js';
 import { runMigrations } from './migrate.js';
+import { ident } from '../src/db/sql.js';
 
 const log = createLogger('db-reset');
 
@@ -18,8 +19,9 @@ export async function dropAllTables(database) {
       [database]);
     const views = await conn.query("SELECT TABLE_NAME AS t FROM information_schema.VIEWS WHERE TABLE_SCHEMA = ?", [database]);
     await conn.query('SET FOREIGN_KEY_CHECKS = 0');
-    for (const { t } of views) await conn.query(`DROP VIEW IF EXISTS \`${t.replace(/`/g, '``')}\``);
-    for (const { t } of tables) await conn.query(`DROP TABLE IF EXISTS \`${t.replace(/`/g, '``')}\``);
+    // Names come from information_schema; ident() still refuses anything that is not a plain identifier.
+    for (const { t } of views) await conn.query(`DROP VIEW IF EXISTS ${ident(t)}`);
+    for (const { t } of tables) await conn.query(`DROP TABLE IF EXISTS ${ident(t)}`);
     await conn.query('SET FOREIGN_KEY_CHECKS = 1');
     return tables.length + views.length;
   } finally {
