@@ -20,6 +20,30 @@ This README is a tutorial. It explains *what* MariaDB's temporal features do, *w
 reconstruct Wikipedia's past, *how* application time and system time combine, and *what it costs*, with
 numbers measured on the real dataset.
 
+> **Key findings**
+>
+> 1. **System time alone cannot reconstruct Wikipedia's past.** It records when *the database* changed, so a naive
+>    import stamps every version with the import day. Wikipedia's timeline must be **application time**
+>    (`PERIOD FOR` + `WITHOUT OVERLAPS`). System versioning on top then records how our *knowledge* evolved:
+>    783 superseded "valid until further notice" beliefs, queryable as "what did we believe at S about T?" ([§5](#5-two-clocks-application-time-vs-system-time)).
+> 2. **Two independent mechanisms agree.** Application-time lookups and a `SYSTEM_TIME` replay in which MariaDB's clock
+>    was set to Wikipedia time return the same revision on **2,000 of 2,000** boundary probes ([§5.4](#54-and-the-history-for-free-design-simulated-and-used-as-a-cross-check)).
+> 3. **The interval lookup is one index read**: with `ORDER BY valid_from DESC LIMIT 1` it reads ~1 entry per query,
+>    versus ~132 without it and ~150 for `FOR SYSTEM_TIME AS OF` on the mirror ([§10](#10-query-plans-and-benchmarks)).
+> 4. **`PARTITION BY SYSTEM_TIME` pays off for current-state queries and retention, not for the distant past.**
+>    On 1M row versions: current-state scan 184 ms → 1.1 ms; `AS OF` a recent instant 195 → 37.5 ms; `AS OF` an old
+>    instant gains nothing (pruning is asymmetric); monthly partitions cost 4× the file size of yearly ones ([§9](#9-partitioning-by-system_time)).
+> 5. **The mechanism is free, the bytes are not.** Every version is a full row copy: with the text inline, the history
+>    would weigh 7.5 GiB. MariaDB's `COMPRESSED` column only gets 2×, while a deduplicated, delta-friendly chunk store gets
+>    65 MiB, 118× smaller ([§11](#11-content-storage-and-rendering)).
+> 6. **MariaDB 13.0.2 surprises, all tested:** a *no-op* `UPDATE` still writes a history row; foreign keys protect only
+>    current rows; current rows end in **2106**, not 2038; periods cannot be empty, so same-second revisions are shadowed;
+>    transaction-precise history keeps one version per transaction but cannot be partitioned (error 4110)
+>    ([findings](docs/mariadb-13-findings.md)).
+> 7. **Two documentation errors, found by running the documented statements:** resetting `system_versioning_asof` with
+>    the quoted `'DEFAULT'` fails (error 1231) and leaves the session silently in the past; `TRUNCATE` does not drop
+>    history, it is refused (error 4137) ([§7](#beyond-the-time-machine-npm-run-explore)).
+
 ---
 
 ## Contents
