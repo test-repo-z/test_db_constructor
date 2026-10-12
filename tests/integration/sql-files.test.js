@@ -32,6 +32,16 @@ async function runFile(name, prefix = '') {
 
 const leftovers = async () => (await conn.query("SELECT COUNT(*) AS n FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE 'tutorial\\_%'"))[0].n;
 
+test('sql/00_naive_import_time_stamps.sql: import-time stamps cannot answer "as of 2023"', async () => {
+  const v = await runFile('00_naive_import_time_stamps.sql');
+  assert.deepEqual(v.rows_as_of_2023_06_01, [0], 'system time knows nothing before the import');
+  assert.deepEqual(v.imported_rev, [100, 200, 300], 'all versions were kept ...');
+  assert.deepEqual(v.versions_stamped_today, [3], '... but every one carries the import date');
+  assert.deepEqual(v.whole_history_within_seconds.map(Number), [1]);
+  assert.deepEqual(v.answer_from_the_data, [200], 'only the Wikipedia date carried as data answers the question');
+  assert.equal(await leftovers(), 0);
+});
+
 test('sql/01_bitemporal_table.sql: half-open lookups and a one-row plan', async () => {
   const v = await runFile('01_bitemporal_table.sql');
   assert.deepEqual(v.revision_at_exactly_T2, [200]);

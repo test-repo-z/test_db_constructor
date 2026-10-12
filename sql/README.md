@@ -1,7 +1,7 @@
 # Reusable temporal SQL
 
 Plain SQL files with the patterns this project is built on, written to be copied into your own schema.
-Every file runs top to bottom with the `mariadb` client. Files 01–04 are **standalone**: they create
+Every file runs top to bottom with the `mariadb` client. Files 00–04 are **standalone**: they create
 `tutorial_*` tables, use them, and drop them again, so they can be run in any database, as often as you like.
 File 05 queries the project's own tables (after `npm run demo`).
 
@@ -11,6 +11,7 @@ asserts those values on every CI run.
 
 | File | Shows | Key statements |
 |---|---|---|
+| [`00_naive_import_time_stamps.sql`](00_naive_import_time_stamps.sql) | the naive design (option A of README §5.5): why system time alone cannot say what Wikipedia showed in 2023 | `WITH SYSTEM VERSIONING`, `AS OF` returning nothing, every version stamped with the import day |
 | [`01_bitemporal_table.sql`](01_bitemporal_table.sql) | a bitemporal table, and "what was valid at T?" with half-open boundaries | `PERIOD FOR`, `WITHOUT OVERLAPS`, `WITH SYSTEM VERSIONING`, the `ORDER BY … DESC LIMIT 1` lookup, `ANALYZE` (1 row read) |
 | [`02_closing_intervals_for_portion_of.sql`](02_closing_intervals_for_portion_of.sql) | learning about a newer revision without losing the old belief; changing part of an interval | `DELETE … FOR PORTION OF`, `UPDATE … FOR PORTION OF`, `FOR SYSTEM_TIME ALL` |
 | [`03_system_time_queries.sql`](03_system_time_queries.sql) | every system-time query form, with exact boundaries, plus a bitemporal query | `AS OF`, `BETWEEN` vs `FROM … TO`, `ALL`, `system_versioning_asof`, `AS OF S` + application-time predicate |

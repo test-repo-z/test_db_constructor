@@ -24,7 +24,9 @@
     "test": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "test:unit": "node --test --test-concurrency=1 \"tests/unit/*.test.js\"",
     "test:integration": "node --test --test-concurrency=1 \"tests/integration/*.test.js\"",
-    "test:e2e": "node --test --test-concurrency=1 \"tests/e2e/*.test.js\""
+    "test:e2e": "node --test --test-concurrency=1 \"tests/e2e/*.test.js\"",
+    "test:coverage": "node --test --test-concurrency=1 --experimental-test-coverage --test-coverage-exclude=\"tests/**\" --test-coverage-exclude=\"node_modules/**\" --test-coverage-lines=90 \"tests/**/*.test.js\"",
+    "lint": "eslint ."
   },
   "license": "MIT",
   "dependencies": {
@@ -38,5 +40,10 @@
     "sanitize-html": "^2.18.0",
     "wtf_wikipedia": "^10.4.2",
     "wtf-plugin-html": "^1.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "globals": "^17.13.0"
   }
 }
