@@ -7,13 +7,42 @@ import { ROOT_DIR } from '../config/index.js';
 
 export const MIGRATIONS_DIR = path.join(ROOT_DIR, 'db', 'migrations');
 
+const sha256 = (text) => createHash('sha256').update(text).digest('hex');
+
+/**
+ * The executable part of a migration: `-- ` comments removed (outside string literals) and whitespace collapsed.
+ * Checksums are taken over this, so correcting a comment in an applied migration does not block deployments,
+ * while any change to the SQL itself still does.
+ */
+export function normalizeSql(sql) {
+  let out = '';
+  let quote = null;
+  for (let i = 0; i < sql.length; i++) {
+    const ch = sql[i];
+    if (quote) {
+      out += ch;
+      if (ch === '\\') { out += sql[++i] ?? ''; continue; }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === "'" || ch === '"' || ch === '`') { quote = ch; out += ch; continue; }
+    if (ch === '-' && sql[i + 1] === '-' && /\s/.test(sql[i + 2] ?? ' ')) {
+      while (i < sql.length && sql[i] !== '\n') i++;
+      out += '\n';
+      continue;
+    }
+    out += ch;
+  }
+  return out.replace(/\s+/g, ' ').trim();
+}
+
 export function listMigrations(dir = MIGRATIONS_DIR) {
   return fs.readdirSync(dir)
     .filter((f) => /^\d{3}_[\w-]+\.sql$/.test(f))
     .sort()
     .map((file) => {
       const sql = fs.readFileSync(path.join(dir, file), 'utf8');
-      return { version: file.slice(0, 3), file, sql, checksum: createHash('sha256').update(sql).digest('hex') };
+      return { version: file.slice(0, 3), file, sql, checksum: sha256(normalizeSql(sql)), rawChecksum: sha256(sql) };
     });
 }
 
@@ -30,7 +59,11 @@ export async function migrate(conn, { log, dir } = {}) {
   for (const m of listMigrations(dir)) {
     const prev = applied.get(m.version);
     if (prev) {
-      if (prev.checksum !== m.checksum) {
+      if (prev.checksum === m.rawChecksum && prev.checksum !== m.checksum) {
+        // Recorded before checksums ignored comments, and the file is byte-identical: upgrade the record.
+        await conn.query('UPDATE schema_migrations SET checksum = ? WHERE version = ?', [m.checksum, m.version]);
+        log?.info(`upgraded the checksum of ${m.file} to the comment-insensitive form`);
+      } else if (prev.checksum !== m.checksum) {
         throw new Error(`migration ${m.file} was modified after being applied (checksum mismatch); write a new migration instead`);
       }
       continue;

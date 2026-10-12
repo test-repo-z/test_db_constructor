@@ -114,7 +114,8 @@ CREATE TABLE article_sync_state (
 -- Content storage (content-addressed + delta-friendly compression).
 --
 -- Consecutive Wikipedia revisions are near-identical. Compressing them one by one
--- (what a COMPRESSED column or InnoDB page compression does) only reaches ~3x;
+-- (what a COMPRESSED column or InnoDB page compression does) only reaches ~2x
+-- (2.0x measured for MEDIUMTEXT COMPRESSED, benchmarks/reports/latest.md);
 -- compressing a run of consecutive texts together with Brotli and a 16 MiB window
 -- lets the codec reference the previous revision, reaching ~100-200x on real data.
 -- A chunk is therefore a Brotli stream of several consecutive texts of one article;

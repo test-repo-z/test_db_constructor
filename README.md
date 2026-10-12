@@ -606,7 +606,7 @@ Summary (full discussion: [`docs/partitioning.md`](docs/partitioning.md)):
   per year of `row_end`, created on demand.
 * **Why not `article_history`:** its system history is small (one superseded belief per article and sync step)
   and partitioned InnoDB tables cannot have foreign keys (verified: errors 1506 and 150), whose integrity
-  guarantees matter more there. Partitioning by application time was considered and rejected (§ in the doc).
+  guarantees matter more there. Partitioning by application time was considered and rejected ([reasons in `docs/partitioning.md`](docs/partitioning.md#what-is-partitioned-and-why-that-table)).
 * **Pruning (verified with `EXPLAIN PARTITIONS`):** non-temporal queries read only `pn`; `AS OF T` skips
   history partitions that ended before `T`, so the pruning is asymmetric (recent instants are cheap, old ones read more
   partitions). Prepared statements prune too.
@@ -753,7 +753,7 @@ MariaDB 13.0.2 container (separate database `wiki_time_machine_test`, reset from
 *external* MediaWiki API is replaced by a deterministic fake (`tests/fixtures/fakeWikipedia.js`). MariaDB's
 temporal semantics are never mocked.
 
-Latest run (`npm test`, MariaDB 13.0.2): **111 tests, 111 passed**: 45 unit, 58 integration, 8 end-to-end.
+Latest run (`npm test`, MariaDB 13.0.2): **114 tests, 114 passed**: 48 unit, 58 integration, 8 end-to-end.
 
 **Continuous integration** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs the same three suites on
 every push and pull request, starting MariaDB 13.0.2 exactly as a reader would (`docker compose up --wait db`
