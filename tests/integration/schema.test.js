@@ -89,9 +89,10 @@ test('CHECK constraints protect revision content status and duplicate pointers',
 test('MariaDB 13.0.2: even a no-op UPDATE on a versioned table writes a history row — so catalog sync only updates real changes', async () => {
   const count = async () => (await pool.query('SELECT COUNT(*) AS n FROM articles FOR SYSTEM_TIME ALL WHERE article_id = 1'))[0].n;
   const before = await count();
-  const res = await pool.query("UPDATE articles SET canonical_title = canonical_title WHERE article_id = 1");
-  assert.equal(res.affectedRows, 1, 'versioned tables report the no-op row as affected');
-  assert.equal(await count(), before + 1, 'and keep an (identical) history version');
+  // (affectedRows is not asserted: the connector runs in found-rows mode, where a no-op UPDATE reports 1 on
+  // every table; only the mariadb client's changed-rows mode distinguishes versioned (1) from plain (0) tables.)
+  await pool.query("UPDATE articles SET canonical_title = canonical_title WHERE article_id = 1");
+  assert.equal(await count(), before + 1, 'the identical row was still copied into history');
 
   const { syncCatalog } = await import('../../src/ingestion/catalog.js');
   const record = { requested_title: 'A', domain: 'Physics', status: 'resolved', canonical_title: (await pool.query('SELECT canonical_title FROM articles WHERE article_id = 1'))[0].canonical_title,

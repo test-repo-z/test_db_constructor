@@ -40,7 +40,7 @@ resolve titles ─► sync `articles` (only real changes are UPDATEd) ─► for
                          smaller batch)
         verify          sha1(downloaded text) == SHA-1 reported by Wikipedia, else the article step fails
         compress        consecutive texts → Brotli chunks (≤ 8 MiB raw, 16 MiB window)
-        ONE TRANSACTION chunks + texts + revisions (INSERT IGNORE)
+        ONE TRANSACTION chunks + texts + revisions (plain INSERT of rows filtered as new)
                         + timeline plan (DELETE … FOR PORTION OF trims, deletes, inserts)
                         + article_sync_state
     commit checkpoint (synced_through, completed_at)
@@ -59,8 +59,10 @@ resolve titles ─► sync `articles` (only real changes are UPDATEd) ─► for
 
 ### Idempotency and restart safety
 
-* `revisions.rev_id` (Wikipedia's revision id) and `revision_texts.sha1` are primary keys; inserts are
-  `INSERT IGNORE`. Running the ingestion twice cannot duplicate a revision.
+* `revisions.rev_id` (Wikipedia's revision id) and `revision_texts.sha1` are primary keys. Rows that already exist
+  are filtered out *before* inserting, and the rest is written with a plain `INSERT`, deliberately not
+  `INSERT IGNORE`, which would also turn CHECK and foreign-key violations into silent warnings. Running the ingestion
+  twice cannot duplicate a revision, and an inconsistent row makes the article step fail and roll back loudly.
 * The timeline is not "inserted"; it is **planned** from all known revisions of the article and only the
   difference is applied (`planTimelineChanges`). Re-running with nothing new is a no-op (no DML, hence no
   spurious system-history rows).

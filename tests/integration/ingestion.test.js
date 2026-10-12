@@ -6,6 +6,7 @@ import { resetTestDatabase, testPool, loadFixture, articleIdByPage, usableArticl
 import { FakeWikipedia } from '../fixtures/fakeWikipedia.js';
 import { fixturePages, ALPHA, BETA, GAMMA } from '../fixtures/dataset.js';
 import { runIngestion } from '../../src/ingestion/ingester.js';
+import * as store from '../../src/ingestion/store.js';
 import { replayMirror } from '../../src/ingestion/replay.js';
 import { databaseChecks } from '../../src/validation/checks.js';
 import { fixtureManifest } from '../fixtures/fakeWikipedia.js';
@@ -106,6 +107,26 @@ describe('clean ingestion of the fixture', () => {
     assert.equal(r.counters.revisionsSkipped, 12);
     assert.equal(r.counters.textsInserted, 0);
     assert.deepEqual(await counts(), before);
+  });
+
+  test('inconsistent or duplicate revision rows fail loudly instead of being skipped (no INSERT IGNORE)', async () => {
+    const conn = await pool.getConnection();
+    try {
+      const [{ run_id }] = await conn.query('SELECT MAX(run_id) AS run_id FROM ingestion_runs');
+      const [existing] = await conn.query('SELECT article_id FROM revisions WHERE rev_id = 110');
+      const row = { rev_id: 999999, article_id: existing.article_id, parent_rev_id: null, rev_timestamp_sql: '2024-01-01 00:00:00',
+        editor: 'x', editor_id: 1, editor_hidden: false, comment: '', comment_hidden: false, is_minor: false, size_bytes: 1,
+        sha1: 'f'.repeat(40), content_status: 'available', is_baseline: false };
+      // sha1 points to no stored text: the foreign key must reject it (INSERT IGNORE would skip it with a warning).
+      await assert.rejects(store.insertRevisions(conn, [row], run_id), (e) => e.code === 'ER_NO_REFERENCED_ROW_2');
+      // a revision that already exists is refused, not silently skipped
+      await assert.rejects(store.insertRevisions(conn, [{ ...row, rev_id: 110, sha1: null, content_status: 'hidden' }], run_id),
+        (e) => e.code === 'ER_DUP_ENTRY');
+      const [{ n }] = await conn.query('SELECT COUNT(*) AS n FROM revisions WHERE rev_id = 999999');
+      assert.equal(n, 0);
+    } finally {
+      conn.release();
+    }
   });
 
   test('validation passes, and the system-time replay agrees with application time', async () => {

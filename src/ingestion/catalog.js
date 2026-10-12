@@ -39,7 +39,8 @@ export function changedFields(existing, desired) {
  */
 export async function syncCatalog(conn, records) {
   for (const name of [...new Set(records.map((r) => r.domain))]) {
-    await conn.query('INSERT IGNORE INTO domains (name) VALUES (?)', [name]);
+    // Explicit no-op on an existing name (not INSERT IGNORE, which would also hide any other error).
+    await conn.query('INSERT INTO domains (name) VALUES (?) ON DUPLICATE KEY UPDATE name = name', [name]);
   }
   const domainIds = new Map((await conn.query('SELECT domain_id, name FROM domains')).map((d) => [d.name, d.domain_id]));
   const existing = new Map((await conn.query('SELECT * FROM articles')).map((a) => [a.requested_title, a]));

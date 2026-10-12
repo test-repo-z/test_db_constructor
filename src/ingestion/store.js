@@ -48,16 +48,23 @@ export async function insertChunk(conn, articleId, { payload, raw, entries }) {
      VALUES (?, 'brotli', ?, ?, ?, ?)`,
     [articleId, entries.length, raw.length, payload.length, payload]);
   const chunkId = res.insertId;
+  // Plain INSERT on purpose (see insertRevisions): texts already stored were filtered out by existingTextShas().
   await conn.batch(
-    'INSERT IGNORE INTO revision_texts (sha1, chunk_id, byte_offset, byte_length) VALUES (?, ?, ?, ?)',
+    'INSERT INTO revision_texts (sha1, chunk_id, byte_offset, byte_length) VALUES (?, ?, ?, ?)',
     entries.map((e) => [e.sha1, chunkId, e.byte_offset, e.byte_length]));
   return chunkId;
 }
 
+/**
+ * Inserts new revision events. Duplicates are handled explicitly BEFORE this call: syncArticle() keeps only rev_ids
+ * that existingRevisionIds() did not find, and the advisory ingest lock rules out concurrent writers. A plain INSERT
+ * therefore fails loudly — rolling back the whole article step — if that invariant is ever broken. INSERT IGNORE
+ * would instead turn the duplicate, and also any CHECK or FOREIGN KEY violation, into a warning and skip the row.
+ */
 export async function insertRevisions(conn, rows, runId) {
   if (!rows.length) return 0;
   const res = await conn.batch(
-    `INSERT IGNORE INTO revisions
+    `INSERT INTO revisions
        (rev_id, article_id, parent_rev_id, rev_timestamp, editor, editor_id, editor_hidden,
         comment, comment_hidden, is_minor, size_bytes, sha1, content_status, is_baseline, run_id)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
